@@ -37,6 +37,8 @@
 .hint-divider { width: 1px; height: 17px; margin: 0 1px; background: rgb(255 255 255 / 32%); }
 [data-hint-title] { max-width: min(42vw, 220px); overflow: hidden; color: #d7efcc; text-overflow: ellipsis; white-space: nowrap; }
 
+.touch-interaction-button[hidden] { display: none; }
+
 .interaction-backdrop {
   position: fixed;
   z-index: 10;
@@ -121,3 +123,30 @@
   .landmark-dialog h2 { font-size: 23px; }
   .dialog-description { margin: 13px auto 21px; font-size: 14px; }
 }
+
+.touch-interaction-button:not([hidden]) {
+    position: fixed;
+    z-index: 9;
+    right: 16px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
+    display: grid;
+    min-width: 112px;
+    min-height: 52px;
+    place-items: center;
+    padding: 0 22px;
+    border: 1px solid rgb(255 255 255 / 72%);
+    border-radius: 17px;
+    color: #fff;
+    background: linear-gradient(110deg, #438d7e, #64aa87);
+    box-shadow: 0 7px 20px rgb(22 60 65 / 30%);
+    font: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: pointer;
+}
+
+.touch-interaction-button:disabled { pointer-events: none; opacity: .55; }
+.touch-interaction-button:focus-visible { outline: 3px solid #edbd68; outline-offset: 3px; }

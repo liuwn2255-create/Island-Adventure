@@ -1,5 +1,9 @@
 import './interaction.css';
 
+function supportsTouchControls() {
+  return navigator.maxTouchPoints > 0 || window.matchMedia('(any-pointer: coarse)').matches;
+}
+
 export class InteractionManager {
   constructor({ player, landmarks, items = [], inventory = null, questManager = null, app }) {
     this.player = player;
@@ -12,6 +16,7 @@ export class InteractionManager {
     this.activeLandmark = null;
     this.additionalInteractables = () => [];
     this.suspended = false;
+    this.touchEnabled = supportsTouchControls();
     this.prompt = document.createElement('div');
     this.prompt.className = 'explore-hint';
     this.prompt.setAttribute('role', 'status');
@@ -40,6 +45,17 @@ export class InteractionManager {
     app.append(this.prompt, this.backdrop);
     app.appendChild(this.toast);
 
+    this.touchInteractionButton = null;
+    if (this.touchEnabled) {
+      this.touchInteractionButton = document.createElement('button');
+      this.touchInteractionButton.className = 'touch-interaction-button';
+      this.touchInteractionButton.type = 'button';
+      this.touchInteractionButton.textContent = '互動';
+      this.touchInteractionButton.setAttribute('aria-label', '互動');
+      this.touchInteractionButton.hidden = true;
+      app.appendChild(this.touchInteractionButton);
+    }
+
     this.closeButton = this.backdrop.querySelector('.dialog-close');
     this.continueButton = this.backdrop.querySelector('.dialog-continue');
     this.promptAction = this.prompt.querySelector('[data-prompt-action]');
@@ -52,9 +68,11 @@ export class InteractionManager {
       }
       if (event.code !== 'KeyE' || event.repeat || !this.nearestInteractable || this.activeLandmark || this.suspended) return;
       event.preventDefault();
-      if (this.nearestInteractable.kind === 'item') this.collectItem(this.nearestInteractable.object);
-      else if (this.nearestInteractable.kind === 'npc') this.nearestInteractable.object.interact();
-      else this.openDialog(this.nearestInteractable.object);
+      this.executeCurrentInteraction();
+    };
+    this.onTouchInteractionClick = (event) => {
+      event.preventDefault();
+      this.executeCurrentInteraction();
     };
     this.onBackdropClick = (event) => {
       if (event.target === this.backdrop) this.closeDialog();
@@ -64,11 +82,16 @@ export class InteractionManager {
     this.backdrop.addEventListener('click', this.onBackdropClick);
     this.closeButton.addEventListener('click', this.onCloseClick);
     this.continueButton.addEventListener('click', this.onCloseClick);
+    this.touchInteractionButton?.addEventListener('click', this.onTouchInteractionClick);
   }
 
   update() {
     if (this.activeLandmark || this.suspended) {
       this.prompt.hidden = true;
+      if (this.touchInteractionButton) {
+        this.touchInteractionButton.hidden = true;
+        this.touchInteractionButton.disabled = true;
+      }
       return;
     }
     const playerPosition = this.player.object3D.position;
@@ -91,6 +114,10 @@ export class InteractionManager {
     this.nearestInteractable = nearest;
     this.nearestLandmark = nearest?.kind === 'landmark' ? nearest.object : null;
     this.prompt.hidden = !nearest;
+    if (this.touchInteractionButton) {
+      this.touchInteractionButton.hidden = !nearest;
+      this.touchInteractionButton.disabled = !nearest;
+    }
     if (nearest) {
       this.promptAction.textContent = nearest.kind === 'item' ? '撿取' : nearest.kind === 'npc' ? '對話' : '探索';
       this.prompt.querySelector('[data-hint-title]').textContent = nearest.kind === 'item' ? nearest.object.name : nearest.object.title;
@@ -102,11 +129,30 @@ export class InteractionManager {
     this.update();
   }
 
+  executeCurrentInteraction() {
+    if (this.suspended || this.activeLandmark) return false;
+
+    // Reuse update()'s candidate and distance calculation so stale buttons or
+    // keyboard events can never act on an out-of-range target.
+    this.update();
+    const target = this.nearestInteractable;
+    if (!target || this.suspended || this.activeLandmark) return false;
+
+    if (target.kind === 'item') this.collectItem(target.object);
+    else if (target.kind === 'npc') target.object.interact();
+    else this.openDialog(target.object);
+    return true;
+  }
+
   openDialog(landmark) {
     this.activeLandmark = landmark;
     this.nearestLandmark = landmark;
     this.questManager?.recordLandmarkExplored(landmark.id);
     this.prompt.hidden = true;
+    if (this.touchInteractionButton) {
+      this.touchInteractionButton.hidden = true;
+      this.touchInteractionButton.disabled = true;
+    }
     this.backdrop.querySelector('[data-dialog-icon]').textContent = landmark.icon;
     this.backdrop.querySelector('[data-dialog-title]').textContent = landmark.title;
     this.backdrop.querySelector('[data-dialog-description]').textContent = landmark.description;
@@ -154,6 +200,10 @@ export class InteractionManager {
     if (suspended) {
       this.player.pressed.clear();
       this.prompt.hidden = true;
+      if (this.touchInteractionButton) {
+        this.touchInteractionButton.hidden = true;
+        this.touchInteractionButton.disabled = true;
+      }
     } else {
       this.update();
     }
@@ -164,9 +214,11 @@ export class InteractionManager {
     this.backdrop.removeEventListener('click', this.onBackdropClick);
     this.closeButton.removeEventListener('click', this.onCloseClick);
     this.continueButton.removeEventListener('click', this.onCloseClick);
+    this.touchInteractionButton?.removeEventListener('click', this.onTouchInteractionClick);
     window.clearTimeout(this.toastTimer);
     this.prompt.remove();
     this.backdrop.remove();
     this.toast.remove();
+    this.touchInteractionButton?.remove();
   }
 }
