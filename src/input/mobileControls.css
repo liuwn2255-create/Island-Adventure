@@ -1,0 +1,57 @@
+.virtual-joystick {
+  position: fixed;
+  z-index: 6;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  left: 12px;
+  display: grid;
+  width: 128px;
+  height: 132px;
+  justify-items: center;
+  align-content: start;
+  gap: 1px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.virtual-joystick-ring {
+  display: grid;
+  width: 108px;
+  height: 108px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 38%);
+  border-radius: 50%;
+  background: rgb(32 69 69 / 28%);
+  box-shadow: inset 0 2px 12px rgb(15 40 43 / 16%), 0 4px 14px rgb(15 40 43 / 13%);
+  backdrop-filter: blur(3px);
+}
+
+.virtual-joystick-knob {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgb(255 255 255 / 76%);
+  border-radius: 50%;
+  background: rgb(240 251 229 / 80%);
+  box-shadow: 0 3px 10px rgb(15 40 43 / 22%);
+  will-change: transform;
+}
+
+.virtual-joystick.is-active .virtual-joystick-knob {
+  background: rgb(229 249 212 / 95%);
+}
+
+.joystick-label {
+  color: rgb(255 255 255 / 83%);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-shadow: 0 1px 4px rgb(15 40 43 / 55%);
+}
+
+@media (max-height: 420px) and (orientation: landscape) {
+  .virtual-joystick {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 5px);
+    transform: scale(.82);
+    transform-origin: bottom left;
+  }
+}

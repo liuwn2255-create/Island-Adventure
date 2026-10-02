@@ -1,0 +1,123 @@
+.explore-hint {
+  position: fixed;
+  z-index: 8;
+  left: 50%;
+  bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: calc(100vw - 28px);
+  padding: 11px 16px;
+  transform: translateX(-50%);
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(31 74 73 / 88%);
+  box-shadow: 0 8px 24px rgb(22 60 65 / 22%);
+  font-size: 13px;
+  font-weight: 750;
+  backdrop-filter: blur(10px);
+  animation: hint-in 180ms ease-out both;
+}
+.explore-hint[hidden], .interaction-backdrop[hidden] { display: none; }
+.explore-hint kbd {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 8px;
+  color: #245b58;
+  background: #e5f2ce;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+.hint-divider { width: 1px; height: 17px; margin: 0 1px; background: rgb(255 255 255 / 32%); }
+[data-hint-title] { max-width: min(42vw, 220px); overflow: hidden; color: #d7efcc; text-overflow: ellipsis; white-space: nowrap; }
+
+.interaction-backdrop {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgb(21 42 50 / 43%);
+  backdrop-filter: blur(5px);
+  animation: backdrop-in 160ms ease-out both;
+}
+.landmark-dialog {
+  position: relative;
+  width: min(440px, 100%);
+  padding: 34px 36px 28px;
+  border: 1px solid rgb(255 255 255 / 92%);
+  border-radius: 27px;
+  color: #274255;
+  background: linear-gradient(155deg, #fffef8 0%, #f1f7e9 100%);
+  box-shadow: 0 24px 80px rgb(17 43 52 / 28%), 0 3px 12px rgb(17 43 52 / 10%);
+  text-align: center;
+  animation: dialog-in 190ms cubic-bezier(.2,.8,.25,1.15) both;
+}
+.dialog-close {
+  position: absolute;
+  top: 14px;
+  right: 15px;
+  display: grid;
+  width: 35px;
+  height: 35px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #6d8589;
+  background: #e7f0e9;
+  font-size: 23px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 140ms, background 140ms, transform 140ms;
+}
+.dialog-close:hover { transform: rotate(5deg); color: #345f58; background: #d9eadc; }
+.dialog-emblem {
+  display: grid;
+  width: 61px;
+  height: 61px;
+  margin: 0 auto 15px;
+  place-items: center;
+  border: 1px solid #d8e8d3;
+  border-radius: 20px;
+  color: #548879;
+  background: linear-gradient(145deg, #eaf5df, #d9efea);
+  box-shadow: 0 8px 20px rgb(65 125 100 / 10%);
+  font-size: 31px;
+}
+.dialog-eyebrow { margin: 0 0 8px; color: #77a28d; font-size: 10px; font-weight: 900; letter-spacing: .18em; }
+.landmark-dialog h2 { margin: 0; color: #234456; font-size: 26px; font-weight: 900; }
+.dialog-description { margin: 16px auto 25px; max-width: 340px; color: #657d83; font-size: 15px; line-height: 1.9; white-space: pre-line; }
+.dialog-continue {
+  min-width: 150px;
+  min-height: 45px;
+  padding: 0 23px;
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(100deg, #438d7e, #64aa87);
+  box-shadow: 0 7px 17px rgb(66 144 126 / 20%);
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform 140ms, filter 140ms;
+}
+.dialog-continue:hover { transform: translateY(-1px); filter: saturate(1.08); }
+.dialog-continue:focus-visible, .dialog-close:focus-visible { outline: 3px solid #edbd68; outline-offset: 3px; }
+@keyframes hint-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (max-width: 600px) {
+  .explore-hint { right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); left: auto; max-width: calc(100vw - 156px); transform: none; gap: 7px; padding: 9px 12px; font-size: 12px; }
+  .landmark-dialog { padding: 30px 24px 23px; border-radius: 23px; }
+  .dialog-emblem { width: 54px; height: 54px; border-radius: 18px; font-size: 27px; }
+  .landmark-dialog h2 { font-size: 23px; }
+  .dialog-description { margin: 13px auto 21px; font-size: 14px; }
+}

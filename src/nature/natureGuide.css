@@ -1,0 +1,79 @@
+.nature-guide-toggle {
+  position: fixed;
+  z-index: 14;
+  top: 16px;
+  right: 304px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 14px;
+  color: #315a59;
+  background: rgb(249 255 244 / 93%);
+  box-shadow: 0 7px 20px rgb(27 67 68 / 18%);
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+.nature-guide-toggle:hover { background: #fff; transform: translateY(-1px); }
+.nature-guide-toggle:focus-visible, .nature-guide-close:focus-visible { outline: 3px solid #edbd68; outline-offset: 3px; }
+
+.nature-guide-panel {
+  position: fixed;
+  z-index: 13;
+  top: 150px;
+  right: 16px;
+  width: min(390px, calc(100vw - 32px));
+  max-height: min(560px, calc(100dvh - 168px));
+  overflow: auto;
+  padding: 17px;
+  border: 1px solid rgb(255 255 255 / 92%);
+  border-radius: 19px;
+  color: #294653;
+  background: linear-gradient(155deg, #fffef8, #eff7e9);
+  box-shadow: 0 16px 48px rgb(17 43 52 / 25%);
+}
+.nature-guide-panel[hidden], .nature-discovery-toast[hidden] { display: none; }
+.nature-guide-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+.nature-guide-header h2 { margin: 0; font-size: 18px; font-weight: 900; }
+.nature-guide-close { display: grid; flex: 0 0 auto; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 50%; color: #6d8589; background: #e7f0e9; font-size: 21px; cursor: pointer; }
+.nature-guide-count { margin: 0 0 12px; color: #658078; font-size: 12px; font-weight: 800; }
+.nature-guide-list { display: grid; gap: 10px; }
+.nature-entry { min-width: 0; padding: 12px; border: 1px solid #e2ece3; border-radius: 14px; background: rgb(255 255 255 / 78%); }
+.nature-entry h3 { margin: 0 0 7px; color: #315f59; font-size: 14px; font-weight: 900; }
+.nature-entry.is-undiscovered h3 { color: #879497; }
+.nature-locked-label { margin: 0; color: #8b9698; font-size: 12px; font-weight: 750; }
+.nature-photo { display: grid; min-height: 94px; margin: 8px 0 10px; place-items: center; overflow: hidden; border: 1px dashed #b8cdbb; border-radius: 11px; color: #728a7d; background: linear-gradient(135deg, #eef4e7, #e5efe9); font-size: 12px; font-weight: 750; }
+.nature-photo img { display: block; width: 100%; max-height: 190px; object-fit: cover; }
+.nature-entry dl { display: grid; gap: 8px; margin: 0; }
+.nature-detail dt { margin-bottom: 2px; color: #69817b; font-size: 10px; font-weight: 850; }
+.nature-detail dd { margin: 0; color: #405d61; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.nature-entry-sources { display: grid; gap: 5px; margin-top: 10px; }
+.nature-entry-sources a { color: #28776c; font-size: 11px; font-weight: 800; line-height: 1.45; overflow-wrap: anywhere; }
+
+.nature-discovery-toast {
+  position: fixed;
+  z-index: 16;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 242px);
+  left: 50%;
+  display: grid;
+  gap: 3px;
+  max-width: calc(100vw - 28px);
+  padding: 12px 20px;
+  transform: translateX(-50%);
+  border: 1px solid rgb(255 255 255 / 50%);
+  border-radius: 16px;
+  color: #fff;
+  background: rgb(46 111 88 / 95%);
+  box-shadow: 0 8px 26px rgb(20 49 72 / 24%);
+  text-align: center;
+  backdrop-filter: blur(9px);
+}
+.nature-discovery-toast strong { font-size: 13px; }
+.nature-discovery-toast span { font-size: 14px; font-weight: 850; }
+
+@media (max-width: 600px) {
+  .nature-guide-toggle { top: 140px; right: 100px; min-height: 39px; padding: 0 9px; font-size: 12px; }
+  .nature-guide-panel { top: 190px; right: 12px; width: min(390px, calc(100vw - 24px)); max-height: calc(100dvh - 204px); padding: 14px; }
+  .nature-discovery-toast { bottom: calc(env(safe-area-inset-bottom, 0px) + 232px); }
+}

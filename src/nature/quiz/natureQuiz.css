@@ -1,0 +1,34 @@
+.nature-quiz-backdrop { position: fixed; z-index: 32; inset: 0; display: grid; place-items: center; overflow-y: auto; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); background: rgb(21 45 52 / 46%); backdrop-filter: blur(5px); }
+.nature-quiz-backdrop[hidden] { display: none; }
+.nature-quiz-card { box-sizing: border-box; width: min(460px, 100%); min-width: 0; max-height: min(760px, calc(100dvh - 32px)); overflow: auto; padding: 22px; border: 1px solid rgb(255 255 255 / 88%); border-radius: 24px; color: #294653; background: linear-gradient(155deg, #fffef8, #eff7e9); box-shadow: 0 22px 64px rgb(17 43 52 / 30%); }
+.nature-quiz-header { display: grid; grid-template-columns: minmax(0, 1fr) 40px; align-items: center; gap: 10px; }
+.nature-quiz-eyebrow { margin: 0 0 4px; color: #4e947c; font-size: 13px; font-weight: 900; }
+.nature-quiz-header h2 { margin: 0; color: #244a4c; font-size: 22px; font-weight: 950; overflow-wrap: anywhere; }
+.nature-quiz-species-zhuyin { margin-top: 2px; }
+.nature-quiz-x { width: 40px; height: 40px; border: 0; border-radius: 50%; color: #6d8589; background: #e7f0e9; font-size: 22px; cursor: pointer; }
+.nature-quiz-question { display: grid; gap: 3px; min-width: 0; margin: 20px 0 13px; color: #304f51; line-height: 1.5; font-weight: 900; overflow-wrap: anywhere; }
+.nature-quiz-prompt { font-size: 20px; }
+.nature-quiz-zhuyin { display: block; color: #66827b; font-size: 13px; line-height: 1.45; letter-spacing: .04em; overflow-wrap: anywhere; }
+.nature-quiz-prompt-zhuyin { font-size: 14px; }
+.nature-quiz-options { display: grid; gap: 10px; min-width: 0; }
+.nature-quiz-option { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0; min-height: 72px; padding: 11px 14px; border: 1px solid #c6d9ca; border-radius: 16px; color: #355851; background: #fff; text-align: left; font: inherit; overflow-wrap: anywhere; cursor: pointer; touch-action: manipulation; }
+.nature-quiz-option-marker { flex: 0 0 auto; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #397963; background: #e8f3e5; font-size: 15px; font-weight: 950; }
+.nature-quiz-option-copy { display: grid; gap: 2px; min-width: 0; }
+.nature-quiz-option-text { color: #294e47; font-size: 18px; line-height: 1.35; font-weight: 900; overflow-wrap: anywhere; }
+.nature-quiz-option-zhuyin { font-size: 13px; }
+.nature-quiz-option:hover:not(:disabled) { border-color: #66a888; background: #f0f8ec; }
+.nature-quiz-option:disabled { color: #647873; background: #f1f4ed; cursor: default; }
+.nature-quiz-result { display: grid; gap: 4px; margin-top: 15px; padding: 13px; border-radius: 14px; background: #eaf4e5; }
+.nature-quiz-result[hidden] { display: none; }
+.nature-quiz-result strong { font-size: 18px; font-weight: 950; }
+.nature-quiz-result .is-correct { color: #25825d; }
+.nature-quiz-result .is-incorrect { color: #9b6730; }
+.nature-quiz-result p { margin: 5px 0 0; color: #405d61; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
+.nature-quiz-correct-label { color: #405d61; font-size: 14px; font-weight: 800; }
+.nature-quiz-correct-answer { color: #294e47; font-size: 19px; font-weight: 950; overflow-wrap: anywhere; }
+.nature-quiz-correct-zhuyin { font-size: 14px; }
+.nature-quiz-close, .nature-quiz-retry { width: 100%; min-height: 48px; margin-top: 14px; border: 0; border-radius: 13px; color: #fff; background: linear-gradient(100deg, #398c83, #58aa86); font: inherit; font-size: 15px; font-weight: 900; cursor: pointer; touch-action: manipulation; }
+.nature-quiz-retry { margin-top: 12px; border: 1px solid #9cc8a7; color: #285c50; background: #e2f2dd; }
+.nature-quiz-retry[hidden] { display: none; }
+.nature-quiz-option:focus-visible, .nature-quiz-close:focus-visible, .nature-quiz-retry:focus-visible, .nature-quiz-x:focus-visible { outline: 3px solid #edbd68; outline-offset: 3px; }
+@media (max-width: 380px) { .nature-quiz-backdrop { padding-right: 12px; padding-left: 12px; } .nature-quiz-card { padding: 16px; border-radius: 20px; } .nature-quiz-header h2 { font-size: 20px; } .nature-quiz-option { padding: 10px 11px; } .nature-quiz-option-text { font-size: 17px; } }

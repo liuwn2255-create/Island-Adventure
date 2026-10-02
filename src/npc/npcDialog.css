@@ -1,0 +1,51 @@
+.npc-dialog-backdrop {
+  position: fixed;
+  z-index: 24;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(18 40 45 / 42%);
+  backdrop-filter: blur(5px);
+}
+
+.npc-dialog-backdrop[hidden] { display: none; }
+
+.npc-dialog-card {
+  position: relative;
+  width: min(430px, 100%);
+  padding: 34px 30px 26px;
+  border: 1px solid rgb(255 255 255 / 84%);
+  border-radius: 24px;
+  color: #294747;
+  background: #fffdf6;
+  box-shadow: 0 24px 70px rgb(24 49 48 / 26%);
+  text-align: center;
+}
+
+.npc-dialog-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  color: #49615a;
+  background: #edf3ea;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.npc-dialog-eyebrow { margin: 0 0 8px; color: #648b68; font-weight: 800; }
+.npc-dialog-card h2 { margin: 0 0 18px; color: #294747; font-size: 28px; }
+.npc-dialog-line { margin: 8px 0; color: #526b61; font-size: 17px; line-height: 1.7; }
+.npc-dialog-continue { min-width: 150px; min-height: 48px; margin-top: 18px; border: 0; border-radius: 15px; color: white; background: #47856d; font: inherit; font-weight: 800; cursor: pointer; }
+.npc-dialog-continue:hover { background: #39765f; }
+.npc-dialog-card button:focus-visible { outline: 3px solid #e7b967; outline-offset: 3px; }
+
+@media (max-width: 480px) {
+  .npc-dialog-card { padding: 32px 22px 23px; border-radius: 21px; }
+  .npc-dialog-card h2 { font-size: 24px; }
+  .npc-dialog-line { font-size: 16px; }
+}

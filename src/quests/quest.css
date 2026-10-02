@@ -1,0 +1,73 @@
+.quest-toggle {
+  position: fixed;
+  z-index: 14;
+  top: 16px;
+  right: 116px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 14px;
+  color: #315a59;
+  background: rgb(249 255 244 / 93%);
+  box-shadow: 0 7px 20px rgb(27 67 68 / 18%);
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+.quest-toggle:hover { background: #fff; transform: translateY(-1px); }
+.quest-toggle:focus-visible, .quest-close:focus-visible { outline: 3px solid #edbd68; outline-offset: 3px; }
+
+.quest-panel {
+  position: fixed;
+  z-index: 13;
+  top: 66px;
+  right: 16px;
+  width: min(350px, calc(100vw - 32px));
+  max-height: min(540px, calc(100dvh - 84px));
+  overflow: auto;
+  padding: 17px;
+  border: 1px solid rgb(255 255 255 / 92%);
+  border-radius: 19px;
+  color: #294653;
+  background: linear-gradient(155deg, #fffef8, #f1f7e9);
+  box-shadow: 0 16px 48px rgb(17 43 52 / 25%);
+}
+.quest-panel[hidden], .quest-completion-toast[hidden] { display: none; }
+.quest-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.quest-panel-header h2 { margin: 0; font-size: 18px; font-weight: 900; }
+.quest-close { display: grid; flex: 0 0 auto; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 50%; color: #6d8589; background: #e7f0e9; font-size: 21px; cursor: pointer; }
+.quest-list { display: grid; gap: 9px; }
+.quest-card { min-width: 0; padding: 11px 12px; border: 1px solid #e2ece3; border-radius: 13px; background: rgb(255 255 255 / 77%); }
+.quest-card h3 { margin: 0; color: #315f59; font-size: 14px; font-weight: 900; }
+.quest-description { margin: 5px 0 7px; color: #70848a; font-size: 12px; line-height: 1.45; }
+.quest-progress { margin: 0; color: #4b927d; font-size: 12px; font-weight: 850; }
+.quest-card.is-complete { border-color: #b9deca; background: #f1faf2; }
+.quest-card.is-complete .quest-progress { color: #39896e; }
+
+.quest-completion-toast {
+  position: fixed;
+  z-index: 15;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 136px);
+  left: 50%;
+  display: grid;
+  gap: 3px;
+  max-width: calc(100vw - 28px);
+  padding: 12px 20px;
+  transform: translateX(-50%);
+  border: 1px solid rgb(255 255 255 / 50%);
+  border-radius: 16px;
+  color: #fff;
+  background: rgb(38 93 77 / 94%);
+  box-shadow: 0 8px 26px rgb(20 62 55 / 24%);
+  text-align: center;
+  backdrop-filter: blur(9px);
+}
+.quest-completion-toast strong { font-size: 13px; }
+.quest-completion-toast span { font-size: 14px; font-weight: 850; }
+
+@media (max-width: 600px) {
+  .quest-toggle { top: 12px; right: 90px; min-height: 39px; padding: 0 11px; font-size: 12px; }
+  .quest-panel { top: 190px; right: 12px; width: min(350px, calc(100vw - 24px)); max-height: calc(100dvh - 204px); padding: 14px; }
+  .quest-completion-toast { bottom: calc(env(safe-area-inset-bottom, 0px) + 126px); }
+}

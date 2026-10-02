@@ -1,0 +1,58 @@
+.game-start-screen {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  place-items: center;
+  padding: 24px 18px;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 52% 110%, rgb(161 203 166 / 42%), transparent 52%),
+    linear-gradient(160deg, #e3f2f2 0%, #c9e4e5 47%, #a7d1d0 100%);
+}
+.game-start-landscape { position: absolute; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; }
+.start-sun { position: absolute; top: 11%; right: 17%; width: clamp(72px, 10vw, 126px); aspect-ratio: 1; border-radius: 50%; background: rgb(255 249 221 / 68%); box-shadow: 0 0 85px rgb(255 252 224 / 30%); }
+.start-water { position: absolute; right: -12%; bottom: -20%; left: -12%; height: 44%; border-radius: 50% 50% 0 0; background: linear-gradient(180deg, rgb(83 157 163 / 55%), rgb(49 121 133 / 70%)); }
+.start-island { position: absolute; bottom: 16%; left: 50%; width: min(70vw, 780px); height: min(17vw, 190px); min-height: 108px; transform: translateX(-50%); border-radius: 50% 50% 44% 45%; background: linear-gradient(180deg, #8ebc91 0 55%, #856f53 56% 100%); box-shadow: 0 25px 0 rgb(85 105 91 / 13%), 0 36px 55px rgb(39 90 98 / 20%); }
+.game-start-card {
+  display: grid;
+  justify-items: center;
+  width: min(100%, 490px);
+  padding: clamp(28px, 5vw, 48px) clamp(22px, 5vw, 54px) 36px;
+  border: 1px solid rgb(255 255 255 / 70%);
+  border-radius: 28px;
+  background: rgb(247 252 248 / 82%);
+  box-shadow: 0 28px 90px rgb(35 77 81 / 17%), inset 0 1px 0 #fff;
+  text-align: center;
+  backdrop-filter: blur(12px);
+}
+.game-start-emblem { display: grid; width: 68px; height: 68px; place-items: center; border: 1px solid rgb(100 153 143 / 18%); border-radius: 22px; background: linear-gradient(145deg, #e0f0e4, #f6f2df); font-size: 36px; box-shadow: 0 8px 22px rgb(49 108 99 / 9%); }
+.game-start-kicker { margin: 24px 0 10px; color: #648c83; font-size: 10px; font-weight: 850; letter-spacing: .22em; }
+.game-start-card h1 { display: grid; gap: 2px; margin: 0; color: #21464a; font-size: clamp(34px, 7vw, 52px); font-weight: 950; letter-spacing: .09em; line-height: 1.02; }
+.game-start-card h1 span:last-child { color: #518779; font-size: .67em; letter-spacing: .2em; }
+.game-start-subtitle { margin: 18px 0 0; color: #69817f; font-size: 16px; font-weight: 650; letter-spacing: .08em; }
+.game-start-highlights { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 22px 0 29px; padding: 0; list-style: none; }
+.game-start-highlights li { padding: 8px 11px; border: 1px solid rgb(112 158 143 / 20%); border-radius: 999px; color: #51776f; background: rgb(255 255 255 / 56%); font-size: 11px; font-weight: 750; white-space: nowrap; }
+.game-start-actions { display: grid; gap: 10px; width: 100%; }
+.game-start-button { display: flex; align-items: center; justify-content: center; gap: 16px; width: 100%; min-height: 54px; padding: 0 20px; border: 0; border-radius: 15px; color: #fff; background: linear-gradient(100deg, #367e78, #579879); box-shadow: 0 9px 22px rgb(54 126 120 / 24%); font-size: 15px; font-weight: 900; cursor: pointer; transition: transform 160ms, filter 160ms; }
+.game-start-button:hover { transform: translateY(-2px); filter: saturate(1.08); }
+.game-start-button:active { transform: translateY(0); }
+.game-start-button:focus-visible { outline: 3px solid #edbd68; outline-offset: 4px; }
+.game-start-button:disabled { opacity: .72; cursor: progress; }
+.game-start-button span:last-child { font-size: 20px; }
+.game-start-new { min-height: 42px; border: 1px solid rgb(69 128 112 / 24%); border-radius: 13px; color: #52776f; background: rgb(255 255 255 / 55%); font: inherit; font-size: 13px; font-weight: 750; cursor: pointer; }
+.game-start-new:hover { background: #fff; }
+.game-start-new:disabled { opacity: .72; cursor: progress; }
+
+@media (max-width: 420px) {
+  .game-start-screen { padding: 16px; }
+  .game-start-card { padding: 30px 20px 24px; border-radius: 23px; }
+  .game-start-emblem { width: 58px; height: 58px; border-radius: 19px; font-size: 31px; }
+  .game-start-kicker { margin-top: 20px; font-size: 9px; }
+  .game-start-card h1 { font-size: clamp(32px, 10vw, 40px); }
+  .game-start-subtitle { font-size: 14px; }
+  .game-start-highlights { gap: 6px; margin: 19px 0 24px; }
+  .game-start-highlights li { padding: 7px 9px; font-size: 10px; }
+  .start-island { bottom: 10%; width: 92vw; height: 116px; }
+}

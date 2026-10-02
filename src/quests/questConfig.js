@@ -1,0 +1,30 @@
+export const QUESTS = Object.freeze([
+  Object.freeze({
+    id: 'crystal-explorer',
+    title: '水晶探索者',
+    description: '收集 3 個神秘水晶',
+    type: 'collect_item',
+    itemType: 'mysterious-crystal',
+    target: 3,
+    reward: 1,
+    icon: '💎',
+  }),
+  Object.freeze({
+    id: 'island-adventurer',
+    title: '島嶼探險家',
+    description: '探索 2 個不同地標',
+    type: 'explore_landmark',
+    target: 2,
+    reward: 1,
+    icon: '🏕️',
+  }),
+  Object.freeze({
+    id: 'collector',
+    title: '收藏小達人',
+    description: '收集 5 個任意收藏品',
+    type: 'collect_any',
+    target: 5,
+    reward: 1,
+    icon: '🌸',
+  }),
+]);
