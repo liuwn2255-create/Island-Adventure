@@ -1,12 +1,13 @@
 export const GAME_STATES = Object.freeze({
   START: 'START',
   CHARACTER_SELECT: 'CHARACTER_SELECT',
+  ADVENTURE_WORLD: 'ADVENTURE_WORLD',
   PLAYING: 'PLAYING',
 });
 
 const VALID_STATES = new Set(Object.values(GAME_STATES));
 
-/** Small state holder for the game's three entry-flow screens. */
+/** Small state holder for the game's entry-flow screens and active play. */
 export class GameState {
   constructor(initialState = GAME_STATES.START) {
     if (!VALID_STATES.has(initialState)) throw new Error(`Unknown game state: ${initialState}`);

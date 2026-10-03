@@ -1,5 +1,6 @@
 import { Clock } from 'three';
 import './style.css';
+import './adventure/adventureWorld.css';
 import { CHARACTERS } from './characters/characterConfig.js';
 import { createCharacterSelectionScreen } from './characters/CharacterSelection.js';
 import { PlayerController } from './player/PlayerController.js';
@@ -39,6 +40,8 @@ import { AudioManager } from './audio/AudioManager.js';
 import { GameState, GAME_STATES } from './game/GameState.js';
 import { GameStartScreen } from './ui/GameStartScreen.js';
 import { SaveManager } from './save/SaveManager.js';
+import { ADVENTURE_THEMES, canEnterTheme, createThemeProgress, THEME_IDS, THEME_STATUSES } from './adventure/adventureConfig.js';
+import { AdventureWorldUI } from './adventure/AdventureWorldUI.js';
 import { ExitAdventureUI } from './ui/ExitAdventureUI.js';
 import { FirstExplorationTutorial } from './ui/FirstExplorationTutorial.js';
 import { QuestCompletionUI } from './ui/QuestCompletionUI.js';
@@ -68,6 +71,7 @@ const saveManager = new SaveManager({ app, onSaved: () => {
 window.addEventListener('pagehide', () => saveManager.flush());
 let characterSelection;
 let gameStartScreen;
+let adventureWorldUI;
 let activeAdventure;
 
 function showGameStartScreen() {
@@ -82,8 +86,11 @@ function showGameStartScreen() {
 }
 
 async function startAdventure(character, restoreData = null) {
+  adventureWorldUI?.destroy();
+  adventureWorldUI = null;
   characterSelection?.dispose();
   characterSelection = null;
+  const restoredThemeProgress = restoreData?.themeProgress?.[THEME_IDS.MYSTERY_ISLAND] ?? null;
   const { scene, camera, renderer, groundHeightAt } = createIslandScene(app);
   audioManager.mount();
   // The audio control may have been detached with the paused HUD on return home.
@@ -130,13 +137,13 @@ async function startAdventure(character, restoreData = null) {
   const inventory = new InventoryManager();
   const questManager = new QuestManager();
   if (restoreData) {
-    inventory.loadState(restoreData.inventory);
-    questManager.loadState(restoreData.quests);
+    inventory.loadState(restoredThemeProgress?.inventory);
+    questManager.loadState(restoredThemeProgress?.quests);
   }
   const natureGuideManager = new NatureGuideManager();
-  if (restoreData) natureGuideManager.loadState(restoreData.nature);
+  if (restoreData) natureGuideManager.loadState(restoredThemeProgress?.nature);
   const natureQuestManager = new NatureQuestManager();
-  if (restoreData) natureQuestManager.loadState(restoreData.natureQuests);
+  if (restoreData) natureQuestManager.loadState(restoredThemeProgress?.natureQuests);
   natureQuestManager.syncDiscoveries(natureGuideManager.getEntries().filter((entry) => entry.discovered).map((entry) => entry.id));
   const completionBadgeToastIds = new Map();
   let badgeManager;
@@ -150,7 +157,7 @@ async function startAdventure(character, restoreData = null) {
     }
   });
   badgeManager = new BadgeManager({ questManager, natureQuestManager });
-  if (restoreData) badgeManager.loadState(restoreData.badges);
+  if (restoreData) badgeManager.loadState(restoredThemeProgress?.badges);
   badgeManager.syncNatureQuestCompletion();
   questManager.subscribeCompleted(() => audioManager.playSfx('questComplete'));
   let unlockedBadgeIds = new Set(badgeManager.getBadges().map((badge) => badge.id));
@@ -162,7 +169,7 @@ async function startAdventure(character, restoreData = null) {
     unlockedBadgeIds = nextIds;
   });
   const interactionManager = new InteractionManager({ player, landmarks, items, inventory, questManager, app });
-  if (restoreData) interactionManager.loadState(restoreData.world);
+  if (restoreData) interactionManager.loadState(restoredThemeProgress?.world);
   const panelCoordinator = new PanelCoordinator({ interactionManager });
   const npcDialogUI = new NPCDialogUI({
     app,
@@ -357,16 +364,26 @@ async function startAdventure(character, restoreData = null) {
   const inventoryUI = new InventoryUI({ app, inventory, panelCoordinator });
   let previousInventoryCounts = inventory.getCounts();
   const getSaveData = () => ({
+    version: 2,
     characterId: character.id,
-    hasSeenTutorial,
-    inventory: inventory.saveState(),
-    quests: questManager.saveState(),
-    badges: badgeManager.saveState(),
-    nature: natureGuideManager.saveState(),
-    natureQuests: natureQuestManager.saveState(),
-    world: interactionManager.saveState(),
+    themeProgress: {
+      ...(restoreData?.themeProgress ?? {}),
+      [THEME_IDS.MYSTERY_ISLAND]: {
+        ...createThemeProgress(restoredThemeProgress?.status ?? THEME_STATUSES.IN_PROGRESS),
+        ...(restoredThemeProgress ?? {}),
+        status: restoredThemeProgress?.status ?? THEME_STATUSES.IN_PROGRESS,
+        inventory: inventory.saveState(),
+        quests: questManager.saveState(),
+        badges: badgeManager.saveState(),
+        nature: natureGuideManager.saveState(),
+        natureQuests: natureQuestManager.saveState(),
+        world: interactionManager.saveState(),
+        hasSeenTutorial,
+      },
+    },
+    ...(restoreData?.legacyData ? { legacyData: restoreData.legacyData } : {}),
   });
-  let hasSeenTutorial = restoreData?.hasSeenTutorial === true;
+  let hasSeenTutorial = restoredThemeProgress?.hasSeenTutorial === true;
   let firstTutorialPending = !hasSeenTutorial;
   const scheduleSave = () => saveManager.scheduleSave(getSaveData);
   inventory.subscribe((counts) => {
@@ -531,15 +548,37 @@ async function startAdventure(character, restoreData = null) {
 }
 
 function showCharacterSelection() {
+  adventureWorldUI?.destroy();
+  adventureWorldUI = null;
   gameStartScreen?.dispose();
   gameStartScreen = null;
   gameState.set(GAME_STATES.CHARACTER_SELECT);
   characterSelection = createCharacterSelectionScreen({
     app,
     characters: CHARACTERS,
-    onStart: startAdventure,
+    onStart: (character) => showAdventureWorld(character),
   });
   audioManager.startGameAudio();
+}
+
+function showAdventureWorld(character, restoreData = null) {
+  characterSelection?.dispose();
+  characterSelection = null;
+  gameStartScreen?.dispose();
+  gameStartScreen = null;
+  gameState.set(GAME_STATES.ADVENTURE_WORLD);
+  adventureWorldUI?.destroy();
+  adventureWorldUI = new AdventureWorldUI({
+    app,
+    themes: ADVENTURE_THEMES,
+    themeProgress: restoreData?.themeProgress ?? {},
+    onSelect: (theme) => {
+      if (!canEnterTheme(theme) || theme.id !== THEME_IDS.MYSTERY_ISLAND) return;
+      adventureWorldUI?.destroy();
+      adventureWorldUI = null;
+      return startAdventure(character, restoreData);
+    },
+  });
 }
 
 function beginNewAdventure() {
@@ -552,18 +591,19 @@ function beginNewAdventure() {
 
 async function continueAdventure() {
   if (activeAdventure?.isPaused()) return activeAdventure.resume();
-  const data = saveManager.load();
-  const character = CHARACTERS.find((entry) => entry.id === data?.characterId);
-  if (!data || !character) {
-    saveManager.clearSave();
-    audioManager.startGameAudio();
-    showCharacterSelection();
+  const result = saveManager.loadResult();
+  if (!result.ok) {
+    console.warn('無法繼續探險；原始存檔已保留。', result.status);
     return;
   }
-  gameStartScreen?.dispose();
-  gameStartScreen = null;
+  const data = result.data;
+  const character = CHARACTERS.find((entry) => entry.id === data.characterId);
+  if (!character) {
+    console.warn('存檔中的角色目前不可用；原始存檔已保留。');
+    return;
+  }
   audioManager.startGameAudio();
-  await startAdventure(character, data);
+  showAdventureWorld(character, data);
 }
 
 showGameStartScreen();

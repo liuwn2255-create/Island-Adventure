@@ -1,6 +1,11 @@
 import { SAVE_DEBOUNCE_MS, SAVE_STORAGE_KEY, SAVE_VERSION } from './saveConfig.js';
+import { isV2SaveData, LEGACY_SAVE_VERSION, migrateSaveData } from './saveMigration.js';
 
-/** Safe, versioned localStorage persistence for the current adventure. */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** Versioned localStorage persistence with non-destructive legacy migration. */
 export class SaveManager {
   constructor({ storage, key = SAVE_STORAGE_KEY, debounceMs = SAVE_DEBOUNCE_MS, onSaved = () => {} } = {}) {
     if (storage === undefined) {
@@ -15,9 +20,14 @@ export class SaveManager {
   }
 
   save(data) {
-    if (!this.storage || !data || typeof data !== 'object') return false;
+    if (!this.storage || !isRecord(data)
+      || (Object.hasOwn(data, 'version') && data.version !== SAVE_VERSION)) return false;
+
+    const versionedData = { ...data, version: SAVE_VERSION };
+    if (!this.isValidV2(versionedData)) return false;
+
     try {
-      this.storage.setItem(this.key, JSON.stringify({ ...data, version: SAVE_VERSION }));
+      this.storage.setItem(this.key, JSON.stringify(versionedData));
       this.onSaved();
       return true;
     } catch (error) {
@@ -46,22 +56,76 @@ export class SaveManager {
     return this.save(data);
   }
 
-  load() {
-    if (!this.storage) return null;
+  loadResult() {
+    if (!this.storage) return { ok: false, status: 'storage-unavailable', data: null };
+
+    let raw;
     try {
-      const raw = this.storage.getItem(this.key);
-      if (!raw) return null;
-      const data = JSON.parse(raw);
-      if (!this.isValid(data)) { this.clearSave(); return null; }
-      return data;
+      raw = this.storage.getItem(this.key);
     } catch (error) {
-      console.warn('探險存檔無法讀取，將重新開始：', error);
-      this.clearSave();
-      return null;
+      console.warn('探險存檔無法讀取：', error);
+      return { ok: false, status: 'storage-read-failed', data: null };
+    }
+    if (raw === null) return { ok: false, status: 'missing', data: null };
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (error) {
+      console.warn('探險存檔格式無法解析；原始資料已保留：', error);
+      return { ok: false, status: 'invalid-json', data: null };
+    }
+
+    if (data?.version === LEGACY_SAVE_VERSION) {
+      if (!this.isValidV1(data)) return { ok: false, status: 'invalid-v1', data: null };
+
+      let migration;
+      try {
+        migration = this.migrateV1(data);
+      } catch (error) {
+        console.warn('探險存檔 migration 失敗；原始資料已保留：', error);
+        return { ok: false, status: 'migration-failed', data: null };
+      }
+      if (!migration?.ok || !this.isValidV2(migration.data)) {
+        console.warn('探險存檔 migration 或 v2 驗證失敗；原始資料已保留。');
+        return { ok: false, status: 'migration-failed', data: null };
+      }
+
+      try {
+        this.storage.setItem(this.key, JSON.stringify(migration.data));
+      } catch (error) {
+        console.warn('無法保存升級後的存檔；原始資料已保留：', error);
+        return { ok: false, status: 'migration-write-failed', data: null };
+      }
+      return { ok: true, status: 'migrated', data: migration.data };
+    }
+
+    if (data?.version === SAVE_VERSION) {
+      if (!this.isValidV2(data)) return { ok: false, status: 'invalid-v2', data: null };
+      return { ok: true, status: 'loaded-v2', data };
+    }
+    return { ok: false, status: 'unsupported-version', data: null };
+  }
+
+  migrateV1(data) {
+    return migrateSaveData(data);
+  }
+
+  load() {
+    const result = this.loadResult();
+    return result.ok ? result.data : null;
+  }
+
+  hasSave() {
+    if (!this.storage) return false;
+    try {
+      return this.storage.getItem(this.key) !== null;
+    } catch (error) {
+      console.warn('無法確認探險存檔：', error);
+      return false;
     }
   }
 
-  hasSave() { return this.load() !== null; }
   getSaveData() { return this.load(); }
 
   clearSave() {
@@ -69,16 +133,24 @@ export class SaveManager {
     globalThis.clearTimeout(this.timer);
     this.timer = null;
     this.pendingData = null;
-    try { this.storage.removeItem(this.key); } catch (error) { console.warn('無法清除探險存檔：', error); }
+    try { this.storage.removeItem(this.key); } catch (error) { console.warn('無法清除探險進度：', error); }
   }
 
-  isValid(data) {
-    return Boolean(data && typeof data === 'object' && data.version === SAVE_VERSION
+  isValidV1(data) {
+    return Boolean(isRecord(data)
+      && data.version === LEGACY_SAVE_VERSION
       && typeof data.characterId === 'string'
-      && data.inventory && typeof data.inventory === 'object'
-      && data.quests && typeof data.quests === 'object'
-      && data.badges && typeof data.badges === 'object'
-      && data.nature && typeof data.nature === 'object'
-      && data.world && typeof data.world === 'object');
+      && data.characterId.trim().length > 0
+      && isRecord(data.inventory)
+      && isRecord(data.quests)
+      && isRecord(data.badges)
+      && isRecord(data.nature)
+      && isRecord(data.world)
+      && (!Object.hasOwn(data, 'natureQuests') || isRecord(data.natureQuests))
+      && (!Object.hasOwn(data, 'hasSeenTutorial') || typeof data.hasSeenTutorial === 'boolean'));
+  }
+
+  isValidV2(data) {
+    return isV2SaveData(data);
   }
 }

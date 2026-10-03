@@ -1,0 +1,108 @@
+.adventure-world-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: clamp(16px, 4vw, 36px);
+  box-sizing: border-box;
+  color: #18352d;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.78), transparent 58%),
+    linear-gradient(155deg, #d8f1df 0%, #b9dfd2 48%, #92c6bd 100%);
+}
+
+.adventure-world-content {
+  width: 100%;
+  max-width: 960px;
+  margin: auto;
+}
+
+.adventure-world-heading {
+  margin: 0 0 24px;
+  text-align: center;
+}
+
+.adventure-world-heading h1 {
+  margin: 0;
+  color: #173e35;
+  font-size: clamp(2rem, 7vw, 3.4rem);
+  line-height: 1.1;
+}
+
+.adventure-world-heading p {
+  margin: 10px 0 0;
+  font-size: clamp(1rem, 3.5vw, 1.25rem);
+}
+
+.adventure-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.adventure-theme-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(16px, 3vw, 24px);
+  box-sizing: border-box;
+  border: 1px solid rgba(40, 86, 69, 0.16);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 12px 28px rgba(31, 76, 65, 0.12);
+}
+
+.adventure-theme-card h2 {
+  margin: 0 0 8px;
+  font-size: clamp(1.15rem, 4vw, 1.45rem);
+}
+
+.adventure-theme-card p {
+  flex: 1;
+  margin: 0 0 18px;
+  line-height: 1.55;
+}
+
+.adventure-theme-card button {
+  min-height: 46px;
+  width: 100%;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  background: #26735b;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.adventure-theme-card button:focus-visible {
+  outline: 3px solid #f2b84b;
+  outline-offset: 3px;
+}
+
+.adventure-theme-card.is-locked {
+  color: #52635d;
+  background: rgba(248, 250, 248, 0.76);
+}
+
+.adventure-theme-card button:disabled {
+  color: #58645f;
+  background: #d9e1dd;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .adventure-theme-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .adventure-world-heading {
+    margin-bottom: 18px;
+  }
+}
