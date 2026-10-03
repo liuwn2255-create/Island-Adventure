@@ -40,7 +40,8 @@ import { AudioManager } from './audio/AudioManager.js';
 import { GameState, GAME_STATES } from './game/GameState.js';
 import { GameStartScreen } from './ui/GameStartScreen.js';
 import { SaveManager } from './save/SaveManager.js';
-import { ADVENTURE_THEMES, canEnterTheme, createThemeProgress, THEME_IDS, THEME_STATUSES } from './adventure/adventureConfig.js';
+import { ADVENTURE_THEMES, createThemeProgress, THEME_IDS, THEME_STATUSES } from './adventure/adventureConfig.js';
+import { AdventureThemeManager } from './adventure/AdventureThemeManager.js';
 import { AdventureWorldUI } from './adventure/AdventureWorldUI.js';
 import { ExitAdventureUI } from './ui/ExitAdventureUI.js';
 import { FirstExplorationTutorial } from './ui/FirstExplorationTutorial.js';
@@ -568,12 +569,15 @@ function showAdventureWorld(character, restoreData = null) {
   gameStartScreen = null;
   gameState.set(GAME_STATES.ADVENTURE_WORLD);
   adventureWorldUI?.destroy();
-  adventureWorldUI = new AdventureWorldUI({
-    app,
+  const themeManager = new AdventureThemeManager({
     themes: ADVENTURE_THEMES,
     themeProgress: restoreData?.themeProgress ?? {},
+  });
+  adventureWorldUI = new AdventureWorldUI({
+    app,
+    themeManager,
     onSelect: (theme) => {
-      if (!canEnterTheme(theme) || theme.id !== THEME_IDS.MYSTERY_ISLAND) return;
+      if (!themeManager.canEnter(theme.id) || theme.id !== THEME_IDS.MYSTERY_ISLAND) return;
       adventureWorldUI?.destroy();
       adventureWorldUI = null;
       return startAdventure(character, restoreData);

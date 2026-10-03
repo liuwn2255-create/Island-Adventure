@@ -1,17 +1,7 @@
-import { ADVENTURE_THEMES, canEnterTheme } from './adventureConfig.js';
-
-function getThemeActionLabel(theme, themeProgress) {
-  const progress = themeProgress?.[theme.id];
-  return progress && progress.status !== 'available' ? '繼續探險' : '開始冒險';
-}
-
-export function isAdventureThemeSelectable(theme) {
-  return canEnterTheme(theme);
-}
-
 export class AdventureWorldUI {
-  constructor({ app, themes = ADVENTURE_THEMES, themeProgress = {}, onSelect = () => {} }) {
+  constructor({ app, themeManager, onSelect = () => {} }) {
     this.app = app;
+    this.themeManager = themeManager;
     this.onSelect = onSelect;
     this.buttons = [];
     this.root = document.createElement('main');
@@ -31,22 +21,23 @@ export class AdventureWorldUI {
 
     const grid = document.createElement('div');
     grid.className = 'adventure-theme-grid';
-    for (const theme of themes) {
-      const selectable = isAdventureThemeSelectable(theme);
+    for (const state of themeManager.getThemes()) {
+      const { theme, canEnter, locked, actionLabel } = state;
       const card = document.createElement('article');
-      card.className = `adventure-theme-card${selectable ? '' : ' is-locked'}`;
+      card.className = `adventure-theme-card${locked ? ' is-locked' : ''}`;
       const name = document.createElement('h2');
       name.textContent = theme.name;
       const description = document.createElement('p');
       description.textContent = theme.description;
       const button = document.createElement('button');
       button.type = 'button';
-      button.disabled = !selectable;
-      button.textContent = selectable ? getThemeActionLabel(theme, themeProgress) : '尚未開放';
+      button.disabled = !canEnter;
+      button.textContent = actionLabel;
       button.setAttribute('aria-label', `${theme.name}：${button.textContent}`);
       const onClick = async () => {
-        if (button.disabled || !isAdventureThemeSelectable(theme)) return;
-        await this.onSelect(theme);
+        if (button.disabled) return;
+        const selectedTheme = this.themeManager.selectTheme(theme.id);
+        if (selectedTheme) await this.onSelect(selectedTheme);
       };
       button.addEventListener('click', onClick);
       this.buttons.push({ button, onClick });
