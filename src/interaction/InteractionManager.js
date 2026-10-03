@@ -17,6 +17,8 @@ export class InteractionManager {
     this.additionalInteractables = () => [];
     this.suspended = false;
     this.touchEnabled = supportsTouchControls();
+    this.getSecondaryInteractionTarget = () => null;
+    this.executeSecondaryInteraction = () => false;
     this.prompt = document.createElement('div');
     this.prompt.className = 'explore-hint';
     this.prompt.setAttribute('role', 'status');
@@ -115,8 +117,13 @@ export class InteractionManager {
     this.nearestLandmark = nearest?.kind === 'landmark' ? nearest.object : null;
     this.prompt.hidden = !nearest;
     if (this.touchInteractionButton) {
-      this.touchInteractionButton.hidden = !nearest;
-      this.touchInteractionButton.disabled = !nearest;
+      const hasSecondaryTarget = !nearest && Boolean(this.getSecondaryInteractionTarget());
+      const hasTarget = Boolean(nearest) || hasSecondaryTarget;
+      const actionLabel = nearest ? '互動' : hasSecondaryTarget ? '觀察' : '';
+      this.touchInteractionButton.hidden = !hasTarget;
+      this.touchInteractionButton.disabled = !hasTarget;
+      this.touchInteractionButton.textContent = actionLabel;
+      this.touchInteractionButton.setAttribute('aria-label', actionLabel);
     }
     if (nearest) {
       this.promptAction.textContent = nearest.kind === 'item' ? '撿取' : nearest.kind === 'npc' ? '對話' : '探索';
@@ -129,6 +136,12 @@ export class InteractionManager {
     this.update();
   }
 
+  setSecondaryInteraction({ getTarget, execute } = {}) {
+    this.getSecondaryInteractionTarget = typeof getTarget === 'function' ? getTarget : () => null;
+    this.executeSecondaryInteraction = typeof execute === 'function' ? execute : () => false;
+    this.update();
+  }
+
   executeCurrentInteraction() {
     if (this.suspended || this.activeLandmark) return false;
 
@@ -136,7 +149,12 @@ export class InteractionManager {
     // keyboard events can never act on an out-of-range target.
     this.update();
     const target = this.nearestInteractable;
-    if (!target || this.suspended || this.activeLandmark) return false;
+    if (this.suspended || this.activeLandmark) return false;
+
+    if (!target) {
+      if (!this.getSecondaryInteractionTarget() || this.suspended || this.activeLandmark) return false;
+      return this.executeSecondaryInteraction() === true;
+    }
 
     if (target.kind === 'item') this.collectItem(target.object);
     else if (target.kind === 'npc') target.object.interact();

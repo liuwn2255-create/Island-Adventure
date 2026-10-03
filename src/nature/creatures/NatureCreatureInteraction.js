@@ -9,29 +9,29 @@ export class NatureCreatureInteraction {
     this.onObservation = onObservation;
     this.nearby = false;
     this.activeCreature = null;
+    this.touchEnabled = navigator.maxTouchPoints > 0 || window.matchMedia('(any-pointer: coarse)').matches;
 
     this.prompt = document.createElement('div');
     this.prompt.className = 'nature-creature-prompt';
     this.prompt.setAttribute('role', 'status');
     this.prompt.setAttribute('aria-live', 'polite');
     this.prompt.hidden = true;
-    this.prompt.innerHTML = '<strong>🔎 發現生物</strong><span>按 <kbd>E</kbd> 觀察</span>';
+    this.prompt.innerHTML = this.touchEnabled
+      ? '<strong>🔎 發現生物</strong><span>點擊右下角「觀察」按鈕</span>'
+      : '<strong>🔎 發現生物</strong><span>按 <kbd>E</kbd> 觀察</span>';
     app.append(this.prompt);
 
     this.onKeyDown = (event) => {
       if (event.code !== 'KeyE' || event.repeat || !this.activeCreature || this.interactionManager.nearestInteractable || this.interactionManager.activeLandmark || this.interactionManager.suspended || this.panelCoordinator.activePanelId) return;
       event.preventDefault();
-      const { config } = this.activeCreature;
-      const firstDiscovery = this.natureGuideManager.discover(config.id);
-      const entry = this.natureGuideManager.getEntry(config.id);
-      if (this.observationUI.open(entry, { firstDiscovery })) this.onObservation(config.id);
+      this.observeCurrentCreature();
     };
     window.addEventListener('keydown', this.onKeyDown);
   }
 
   update() {
     const regularTargetHasPriority = Boolean(this.interactionManager.nearestInteractable);
-    if (this.interactionManager.suspended || this.interactionManager.activeLandmark || regularTargetHasPriority) {
+    if (this.interactionManager.suspended || this.interactionManager.activeLandmark || this.panelCoordinator.activePanelId || regularTargetHasPriority) {
       this.nearby = false;
       this.activeCreature = null;
       this.prompt.hidden = true;
@@ -51,6 +51,22 @@ export class NatureCreatureInteraction {
       .sort((a, b) => a.distance - b.distance)[0]?.creature ?? null;
     this.nearby = Boolean(this.activeCreature);
     this.prompt.hidden = !this.nearby;
+  }
+
+  observeCurrentCreature() {
+    this.update();
+    if (!this.activeCreature
+      || this.interactionManager.nearestInteractable
+      || this.interactionManager.activeLandmark
+      || this.interactionManager.suspended
+      || this.panelCoordinator.activePanelId) return false;
+
+    const { config } = this.activeCreature;
+    const firstDiscovery = this.natureGuideManager.discover(config.id);
+    const entry = this.natureGuideManager.getEntry(config.id);
+    if (!entry || !this.observationUI.open(entry, { firstDiscovery })) return false;
+    this.onObservation(config.id);
+    return true;
   }
 
   dispose() {

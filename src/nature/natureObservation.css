@@ -21,6 +21,10 @@
 .nature-creature-prompt span { font-size: 12px; font-weight: 750; }
 .nature-creature-prompt kbd { display: inline-grid; min-width: 20px; min-height: 20px; place-items: center; border: 1px solid #bfd5c6; border-radius: 6px; background: #fff; font: inherit; font-weight: 900; }
 
+@media (any-pointer: coarse) {
+  .nature-creature-prompt { bottom: calc(env(safe-area-inset-bottom, 0px) + 136px); }
+}
+
 .nature-observation-backdrop {
   position: fixed;
   z-index: 30;

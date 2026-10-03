@@ -269,6 +269,10 @@ async function startAdventure(character, restoreData = null) {
     observationUI,
     onObservation: () => natureQuestManager.recordObservation(),
   });
+  interactionManager.setSecondaryInteraction({
+    getTarget: () => natureCreatureInteraction.activeCreature,
+    execute: () => natureCreatureInteraction.observeCurrentCreature(),
+  });
   const creatureTargets = [
     { config: BUTTERFLY_CONFIG, controller: butterflyController, icon: '🦋' },
     { config: FROG_CONFIG, controller: frogController, icon: '🐸' },
