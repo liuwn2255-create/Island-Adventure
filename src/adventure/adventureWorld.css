@@ -96,6 +96,19 @@
   cursor: not-allowed;
 }
 
+.adventure-theme-placeholder-card {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  align-items: center;
+  text-align: center;
+}
+
+.adventure-theme-placeholder-card p {
+  margin: 0 0 20px;
+  font-size: clamp(1.05rem, 4vw, 1.3rem);
+}
+
 @media (max-width: 560px) {
   .adventure-theme-grid {
     grid-template-columns: minmax(0, 1fr);

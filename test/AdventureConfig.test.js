@@ -9,6 +9,7 @@ import {
   canEnterTheme,
   createThemeProgress,
   isCompletionPolicy,
+  isThemeId,
   isThemeMetadata,
   isThemeProgress,
   isThemeStatus,
@@ -16,34 +17,44 @@ import {
 import { CHARACTERS } from '../src/characters/characterConfig.js';
 import { isCharacterMetadata } from '../src/characters/characterContracts.js';
 
-test('theme IDs are unique and match the four reserved themes', () => {
+const EXPECTED_THEME_IDS = [
+  'mystery-island', 'forest', 'ocean', 'dinosaur',
+  'magic-castle', 'space', 'ancient-desert',
+];
+
+test('seven unique Theme IDs are registered and accepted by the save allowlist', () => {
   const ids = ADVENTURE_THEMES.map((theme) => theme.id);
-  assert.equal(new Set(ids).size, ids.length);
-  assert.deepEqual(ids, [
-    THEME_IDS.MYSTERY_ISLAND,
-    THEME_IDS.FOREST,
-    THEME_IDS.OCEAN,
-    THEME_IDS.DINOSAUR,
-  ]);
+  assert.equal(new Set(ids).size, 7);
+  assert.deepEqual(ids, EXPECTED_THEME_IDS);
+  assert.deepEqual(Object.values(THEME_IDS), EXPECTED_THEME_IDS);
+  for (const id of EXPECTED_THEME_IDS) assert.equal(isThemeId(id), true);
 });
 
-test('mystery-island is the only currently enterable theme', () => {
-  const playableThemes = ADVENTURE_THEMES.filter(canEnterTheme);
-  assert.deepEqual(playableThemes.map((theme) => theme.id), [THEME_IDS.MYSTERY_ISLAND]);
-  assert.equal(playableThemes[0].status, THEME_STATUSES.AVAILABLE);
-});
-
-test('reserved themes are locked and cannot be entered', () => {
-  const reserved = ADVENTURE_THEMES.filter((theme) => theme.id !== THEME_IDS.MYSTERY_ISLAND);
-  assert.equal(reserved.length, 3);
-  for (const theme of reserved) {
-    assert.equal(theme.status, THEME_STATUSES.LOCKED);
-    assert.equal(theme.playable, false);
-    assert.equal(canEnterTheme(theme), false);
+test('all seven themes are enterable without Theme-to-Theme prerequisites', () => {
+  assert.deepEqual(ADVENTURE_THEMES.filter(canEnterTheme).map((theme) => theme.id), EXPECTED_THEME_IDS);
+  for (const theme of ADVENTURE_THEMES) {
+    assert.equal(theme.playable, true);
+    assert.equal(Object.hasOwn(theme, 'unlockRequirement'), false);
   }
 });
 
-test('theme status accepts only the four contract values', () => {
+test('Mystery Island and Forest keep their required quests; other themes defer completion', () => {
+  const mystery = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.MYSTERY_ISLAND);
+  assert.deepEqual(mystery.completionPolicy, {
+    type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+    questIds: ['crystal-explorer', 'island-adventurer', 'collector'],
+  });
+  const forest = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.FOREST);
+  assert.deepEqual(forest.completionPolicy, {
+    type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+    questIds: ['forest-explorer', 'forest-collector', 'forest-discoverer'],
+  });
+  for (const theme of ADVENTURE_THEMES.filter((entry) => ![THEME_IDS.MYSTERY_ISLAND, THEME_IDS.FOREST].includes(entry.id))) {
+    assert.deepEqual(theme.completionPolicy, { type: THEME_COMPLETION_POLICY_TYPES.DEFERRED });
+  }
+});
+
+test('Theme status accepts only the four contract values', () => {
   assert.deepEqual(Object.values(THEME_STATUSES), ['locked', 'available', 'in-progress', 'completed']);
   for (const status of Object.values(THEME_STATUSES)) assert.equal(isThemeStatus(status), true);
   assert.equal(isThemeStatus('coming-soon'), false);
@@ -57,8 +68,27 @@ test('existing character has required ID, name, model path, and display metadata
   assert.equal(typeof CHARACTERS[0].displayMetadata.description, 'string');
 });
 
-test('all theme catalog entries satisfy the metadata contract', () => {
+test('all seven Theme metadata entries satisfy the data contract', () => {
+  assert.equal(ADVENTURE_THEMES.length, 7);
   assert.ok(ADVENTURE_THEMES.every(isThemeMetadata));
+  assert.deepEqual(ADVENTURE_THEMES.map(({ name }) => name), [
+    '🏝️ 神秘島',
+    '🌲 神秘森林',
+    '🌊 深海探險',
+    '🦕 恐龍世界',
+    '🏰 魔法城堡',
+    '🚀 太空探險',
+    '🏜️ 古文明沙漠',
+  ]);
+  for (const theme of ADVENTURE_THEMES) {
+    assert.equal(typeof theme.id, 'string');
+    assert.equal(typeof theme.name, 'string');
+    assert.equal(typeof theme.description, 'string');
+    assert.ok(theme.completionPolicy);
+    assert.ok(theme.status);
+    assert.equal(theme.status, THEME_STATUSES.AVAILABLE);
+    assert.equal(theme.playable, true);
+  }
   assert.equal(isThemeMetadata({ ...ADVENTURE_THEMES[0], name: '' }), false);
 });
 

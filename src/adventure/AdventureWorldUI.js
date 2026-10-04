@@ -22,9 +22,9 @@ export class AdventureWorldUI {
     const grid = document.createElement('div');
     grid.className = 'adventure-theme-grid';
     for (const state of themeManager.getThemes()) {
-      const { theme, canEnter, locked, actionLabel } = state;
+      const { theme, canEnter, actionLabel } = state;
       const card = document.createElement('article');
-      card.className = `adventure-theme-card${locked ? ' is-locked' : ''}`;
+      card.className = 'adventure-theme-card';
       const name = document.createElement('h2');
       name.textContent = theme.name;
       const description = document.createElement('p');

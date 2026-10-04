@@ -50,21 +50,20 @@ function getCards(ui) {
   return ui.root.children[0].children[1].children;
 }
 
-test('AdventureWorldUI renders every configured theme and only enables playable themes', () => {
+test('AdventureWorldUI renders seven selectable theme cards with start labels', () => {
   withDocument(() => {
     const app = new TestElement('div');
     const ui = new AdventureWorldUI({ app, themeManager: new AdventureThemeManager({ themes: ADVENTURE_THEMES }) });
     const cards = getCards(ui);
     assert.equal(cards.length, ADVENTURE_THEMES.length);
-    assert.deepEqual(ui.buttons.map(({ button }) => button.disabled), [false, true, true, true]);
-    assert.deepEqual(ui.buttons.map(({ button }) => button.textContent), [
-      '開始冒險', '尚未開放', '尚未開放', '尚未開放',
-    ]);
+    assert.equal(cards.length, 7);
+    assert.deepEqual(ui.buttons.map(({ button }) => button.disabled), Array(7).fill(false));
+    assert.deepEqual(ui.buttons.map(({ button }) => button.textContent), Array(7).fill('開始冒險'));
     ui.destroy();
   });
 });
 
-test('AdventureWorldUI marks a saved playable theme as continue and dispatches its selection', () => {
+test('AdventureWorldUI marks saved Theme progress as continue and dispatches all seven selections', () => {
   withDocument(() => {
     const app = new TestElement('div');
     const selected = [];
@@ -72,16 +71,56 @@ test('AdventureWorldUI marks a saved playable theme as continue and dispatches i
       app,
       themeManager: new AdventureThemeManager({
         themes: ADVENTURE_THEMES,
-        themeProgress: { [THEME_IDS.MYSTERY_ISLAND]: { status: 'in-progress' } },
+        themeProgress: { [THEME_IDS.SPACE]: { status: 'in-progress' } },
       }),
       onSelect: (theme) => selected.push(theme.id),
     });
-    assert.equal(ui.buttons[0].button.textContent, '繼續探險');
-    ui.buttons[0].button.click();
-    ui.buttons[1].button.click();
-    assert.deepEqual(selected, [THEME_IDS.MYSTERY_ISLAND]);
+    assert.equal(ui.buttons[5].button.textContent, '繼續探險');
+    assert.deepEqual(ui.buttons.map(({ button }) => button.textContent), [
+      '開始冒險', '開始冒險', '開始冒險', '開始冒險', '開始冒險', '繼續探險', '開始冒險',
+    ]);
+    for (const { button } of ui.buttons) {
+      assert.equal(button.disabled, false);
+      button.click();
+    }
+    assert.deepEqual(selected, Object.values(THEME_IDS));
     ui.destroy();
   });
+});
+
+test('AdventureWorldUI keeps all themes clickable when Mystery Island is completed', () => {
+  withDocument(() => {
+    const app = new TestElement('div');
+    const selected = [];
+    const ui = new AdventureWorldUI({
+      app,
+      themeManager: new AdventureThemeManager({
+        themes: ADVENTURE_THEMES,
+        themeProgress: {
+          [THEME_IDS.MYSTERY_ISLAND]: {
+            status: 'completed',
+            completion: { completed: true },
+          },
+        },
+      }),
+      onSelect: (theme) => selected.push(theme.id),
+    });
+
+    for (const { button } of ui.buttons) {
+      assert.equal(button.disabled, false);
+      button.click();
+    }
+    assert.deepEqual(selected, Object.values(THEME_IDS));
+    ui.destroy();
+  });
+});
+
+test('Adventure World CSS keeps the theme grid responsive at phone widths', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const css = await readFile(new URL('../src/adventure/adventureWorld.css', import.meta.url), 'utf8');
+  assert.match(css, /\.adventure-world-content\s*\{[^}]*width:\s*100%/s);
+  assert.match(css, /@media\s*\(max-width:\s*560px\)[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  assert.doesNotMatch(css, /(?:min-width|width):\s*4(?:20|30|40|43)px/);
 });
 
 test('AdventureWorldUI destroy removes the screen and its selection handlers', () => {

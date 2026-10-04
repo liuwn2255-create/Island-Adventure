@@ -3,6 +3,9 @@ export const THEME_IDS = Object.freeze({
   FOREST: 'forest',
   OCEAN: 'ocean',
   DINOSAUR: 'dinosaur',
+  MAGIC_CASTLE: 'magic-castle',
+  SPACE: 'space',
+  ANCIENT_DESERT: 'ancient-desert',
 });
 
 export const THEME_STATUSES = Object.freeze({
@@ -24,34 +27,64 @@ const deferredCompletionPolicy = Object.freeze({ type: THEME_COMPLETION_POLICY_T
 export const ADVENTURE_THEMES = Object.freeze([
   Object.freeze({
     id: THEME_IDS.MYSTERY_ISLAND,
-    name: '神秘島嶼',
+    name: '🏝️ 神秘島',
     description: '探索海上的神秘島嶼，發現生物與古老地標。',
+    status: THEME_STATUSES.AVAILABLE,
+    playable: true,
+    completionPolicy: Object.freeze({
+      type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+      questIds: Object.freeze(['crystal-explorer', 'island-adventurer', 'collector']),
+    }),
+  }),
+  Object.freeze({
+    id: THEME_IDS.FOREST,
+    name: '🌲 神秘森林',
+    description: '森林探險即將展開。',
+    status: THEME_STATUSES.AVAILABLE,
+    playable: true,
+    completionPolicy: Object.freeze({
+      type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+      questIds: Object.freeze(['forest-explorer', 'forest-collector', 'forest-discoverer']),
+    }),
+  }),
+  Object.freeze({
+    id: THEME_IDS.OCEAN,
+    name: '🌊 深海探險',
+    description: '深海探險即將展開。',
     status: THEME_STATUSES.AVAILABLE,
     playable: true,
     completionPolicy: deferredCompletionPolicy,
   }),
   Object.freeze({
-    id: THEME_IDS.FOREST,
-    name: '森林探險',
-    description: '森林主題預留位置，目前尚未開放。',
-    status: THEME_STATUSES.LOCKED,
-    playable: false,
-    completionPolicy: deferredCompletionPolicy,
-  }),
-  Object.freeze({
-    id: THEME_IDS.OCEAN,
-    name: '海洋探險',
-    description: '海洋主題預留位置，目前尚未開放。',
-    status: THEME_STATUSES.LOCKED,
-    playable: false,
-    completionPolicy: deferredCompletionPolicy,
-  }),
-  Object.freeze({
     id: THEME_IDS.DINOSAUR,
-    name: '恐龍世界',
-    description: '恐龍主題預留位置，目前尚未開放。',
-    status: THEME_STATUSES.LOCKED,
-    playable: false,
+    name: '🦕 恐龍世界',
+    description: '恐龍世界探險即將展開。',
+    status: THEME_STATUSES.AVAILABLE,
+    playable: true,
+    completionPolicy: deferredCompletionPolicy,
+  }),
+  Object.freeze({
+    id: THEME_IDS.MAGIC_CASTLE,
+    name: '🏰 魔法城堡',
+    description: '魔法城堡探險即將展開。',
+    status: THEME_STATUSES.AVAILABLE,
+    playable: true,
+    completionPolicy: deferredCompletionPolicy,
+  }),
+  Object.freeze({
+    id: THEME_IDS.SPACE,
+    name: '🚀 太空探險',
+    description: '太空探險即將展開。',
+    status: THEME_STATUSES.AVAILABLE,
+    playable: true,
+    completionPolicy: deferredCompletionPolicy,
+  }),
+  Object.freeze({
+    id: THEME_IDS.ANCIENT_DESERT,
+    name: '🏜️ 古文明沙漠',
+    description: '古文明沙漠探險即將展開。',
+    status: THEME_STATUSES.AVAILABLE,
+    playable: true,
     completionPolicy: deferredCompletionPolicy,
   }),
 ]);
@@ -86,9 +119,7 @@ export function isThemeStatus(value) {
 }
 
 export function canEnterTheme(theme) {
-  return isThemeMetadata(theme)
-    && theme.playable
-    && theme.status !== THEME_STATUSES.LOCKED;
+  return isThemeMetadata(theme) && theme.playable;
 }
 
 export function isCompletionPolicy(policy) {

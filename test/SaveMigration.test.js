@@ -7,6 +7,7 @@ import {
   migrateSaveData,
 } from '../src/save/saveMigration.js';
 import {
+  THEME_IDS,
   THEME_PROGRESS_FIELDS,
   THEME_STATUSES,
   createThemeProgress,
@@ -196,4 +197,15 @@ test('missing optional v1 fields do not discard available state or extensions', 
 
 test('v2 structural validation rejects missing theme progress', () => {
   assert.equal(isV2SaveData({ version: 2, characterId: 'girl-explorer', themeProgress: {} }), false);
+});
+
+test('v2 validation accepts independent progress buckets for all seven Theme IDs', () => {
+  const data = migrateSaveData(createV1Fixture()).data;
+  for (const themeId of Object.values(THEME_IDS)) {
+    if (themeId !== LEGACY_THEME_ID) data.themeProgress[themeId] = createThemeProgress(THEME_STATUSES.AVAILABLE);
+  }
+
+  assert.equal(isV2SaveData(data), true);
+  assert.deepEqual(Object.keys(data.themeProgress), Object.values(THEME_IDS));
+  assert.deepEqual(data.themeProgress[LEGACY_THEME_ID].quests, createV1Fixture().quests);
 });
