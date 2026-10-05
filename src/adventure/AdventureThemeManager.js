@@ -22,6 +22,34 @@ function hasSavedProgress(progress, status) {
   });
 }
 
+const COLLECTIBLE_TOTALS = Object.freeze({
+  'mystery-island': 12,
+  forest: 5,
+  ocean: 5,
+  dinosaur: 5,
+  'ancient-desert': 5,
+  space: 5,
+  'magic-castle': 5,
+});
+
+function getCompletedQuestIds(quests) {
+  if (Array.isArray(quests?.completed)) return new Set(quests.completed.filter((id) => typeof id === 'string'));
+  if (isRecord(quests?.completed)) return new Set(Object.entries(quests.completed).filter(([, completed]) => completed === true).map(([id]) => id));
+  return new Set();
+}
+
+function getCollectedItemCount(progress, themeId) {
+  const collectedIds = new Set([
+    ...(Array.isArray(progress?.quests?.collectedItemIds) ? progress.quests.collectedItemIds : []),
+    ...(Array.isArray(progress?.collections?.collectedItemIds) ? progress.collections.collectedItemIds : []),
+  ].filter((id) => typeof id === 'string'));
+  const counts = progress?.inventory?.counts;
+  const inventoryCount = isRecord(counts)
+    ? Object.values(counts).reduce((total, count) => total + (Number.isFinite(count) && count > 0 ? Math.floor(count) : 0), 0)
+    : 0;
+  return Math.min(COLLECTIBLE_TOTALS[themeId] ?? 0, Math.max(collectedIds.size, inventoryCount));
+}
+
 /** Read-only theme catalog and per-save entry state for Adventure World. */
 export class AdventureThemeManager {
   constructor({ themes = ADVENTURE_THEMES, themeProgress = {} } = {}) {
@@ -51,6 +79,13 @@ export class AdventureThemeManager {
     const playable = theme.playable === true;
     const canEnter = playable && canEnterTheme(theme);
     const hasProgress = hasSavedProgress(progress, savedStatus);
+    const requiredQuestIds = Array.isArray(theme.completionPolicy?.questIds) ? theme.completionPolicy.questIds : [];
+    const completedQuestIds = getCompletedQuestIds(progress?.quests);
+    const completedQuestCount = completed
+      ? requiredQuestIds.length
+      : requiredQuestIds.filter((id) => completedQuestIds.has(id)).length;
+    const collectibleTotal = COLLECTIBLE_TOTALS[themeId] ?? 0;
+    const unlockedBadgeIds = progress?.badges?.unlockedIds;
 
     return {
       theme,
@@ -60,6 +95,10 @@ export class AdventureThemeManager {
       hasProgress,
       canEnter,
       actionLabel: completed ? '已完成' : hasProgress ? '繼續探險' : '開始冒險',
+      completed,
+      questProgress: { completed: completedQuestCount, total: requiredQuestIds.length },
+      collectibleProgress: { collected: getCollectedItemCount(progress, themeId), total: collectibleTotal },
+      hasBadge: Array.isArray(unlockedBadgeIds) && unlockedBadgeIds.some((id) => typeof id === 'string' && id.length > 0),
     };
   }
 

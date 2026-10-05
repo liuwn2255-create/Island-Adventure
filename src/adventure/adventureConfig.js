@@ -53,7 +53,10 @@ export const ADVENTURE_THEMES = Object.freeze([
     description: '深海探險即將展開。',
     status: THEME_STATUSES.AVAILABLE,
     playable: true,
-    completionPolicy: deferredCompletionPolicy,
+    completionPolicy: Object.freeze({
+      type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+      questIds: Object.freeze(['ocean-explorer', 'ocean-collector', 'ocean-discoverer']),
+    }),
   }),
   Object.freeze({
     id: THEME_IDS.DINOSAUR,
@@ -61,7 +64,10 @@ export const ADVENTURE_THEMES = Object.freeze([
     description: '恐龍世界探險即將展開。',
     status: THEME_STATUSES.AVAILABLE,
     playable: true,
-    completionPolicy: deferredCompletionPolicy,
+    completionPolicy: Object.freeze({
+      type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+      questIds: Object.freeze(['dinosaur-explorer', 'dinosaur-collector', 'dinosaur-discoverer']),
+    }),
   }),
   Object.freeze({
     id: THEME_IDS.MAGIC_CASTLE,
@@ -69,15 +75,21 @@ export const ADVENTURE_THEMES = Object.freeze([
     description: '魔法城堡探險即將展開。',
     status: THEME_STATUSES.AVAILABLE,
     playable: true,
-    completionPolicy: deferredCompletionPolicy,
+    completionPolicy: Object.freeze({
+      type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+      questIds: Object.freeze(['magic-castle-explorer', 'magic-castle-collector', 'magic-castle-discoverer']),
+    }),
   }),
   Object.freeze({
     id: THEME_IDS.SPACE,
-    name: '🚀 太空探險',
+    name: '🚀 太空冒險',
     description: '太空探險即將展開。',
     status: THEME_STATUSES.AVAILABLE,
     playable: true,
-    completionPolicy: deferredCompletionPolicy,
+    completionPolicy: Object.freeze({
+      type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+      questIds: Object.freeze(['space-explorer', 'space-collector', 'space-discoverer']),
+    }),
   }),
   Object.freeze({
     id: THEME_IDS.ANCIENT_DESERT,
@@ -85,7 +97,10 @@ export const ADVENTURE_THEMES = Object.freeze([
     description: '古文明沙漠探險即將展開。',
     status: THEME_STATUSES.AVAILABLE,
     playable: true,
-    completionPolicy: deferredCompletionPolicy,
+    completionPolicy: Object.freeze({
+      type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+      questIds: Object.freeze(['ancient-desert-explorer', 'ancient-desert-collector', 'ancient-desert-discoverer']),
+    }),
   }),
 ]);
 

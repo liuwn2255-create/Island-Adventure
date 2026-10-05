@@ -16,6 +16,11 @@ import {
 } from '../src/adventure/adventureConfig.js';
 import { CHARACTERS } from '../src/characters/characterConfig.js';
 import { isCharacterMetadata } from '../src/characters/characterContracts.js';
+import { OCEAN_QUESTS, OCEAN_THEME } from '../src/themes/ocean/oceanConfig.js';
+import { DINOSAUR_QUESTS } from '../src/themes/dinosaur/dinosaurQuestConfig.js';
+import { ANCIENT_DESERT_QUESTS } from '../src/themes/ancient-desert/ancientDesertQuestConfig.js';
+import { SPACE_QUESTS } from '../src/themes/space/spaceQuestConfig.js';
+import { MAGIC_CASTLE_QUESTS } from '../src/themes/magic-castle/magicCastleQuestConfig.js';
 
 const EXPECTED_THEME_IDS = [
   'mystery-island', 'forest', 'ocean', 'dinosaur',
@@ -38,7 +43,7 @@ test('all seven themes are enterable without Theme-to-Theme prerequisites', () =
   }
 });
 
-test('Mystery Island and Forest keep their required quests; other themes defer completion', () => {
+test('all playable quest worlds use the IDs defined by their required quest lists', () => {
   const mystery = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.MYSTERY_ISLAND);
   assert.deepEqual(mystery.completionPolicy, {
     type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
@@ -49,7 +54,37 @@ test('Mystery Island and Forest keep their required quests; other themes defer c
     type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
     questIds: ['forest-explorer', 'forest-collector', 'forest-discoverer'],
   });
-  for (const theme of ADVENTURE_THEMES.filter((entry) => ![THEME_IDS.MYSTERY_ISLAND, THEME_IDS.FOREST].includes(entry.id))) {
+  const ocean = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.OCEAN);
+  assert.equal(ocean.completionPolicy.type, THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS);
+  assert.deepEqual(ocean.completionPolicy.questIds, OCEAN_THEME.completionPolicy.questIds);
+  assert.deepEqual(ocean.completionPolicy.questIds, OCEAN_QUESTS.map(({ id }) => id));
+  const dinosaur = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.DINOSAUR);
+  assert.equal(dinosaur.completionPolicy.type, THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS);
+  assert.deepEqual(dinosaur.completionPolicy.questIds, [
+    'dinosaur-explorer',
+    'dinosaur-collector',
+    'dinosaur-discoverer',
+  ]);
+  assert.deepEqual(dinosaur.completionPolicy.questIds, DINOSAUR_QUESTS.map(({ id }) => id));
+  const ancientDesert = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.ANCIENT_DESERT);
+  assert.equal(ancientDesert.completionPolicy.type, THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS);
+  assert.deepEqual(ancientDesert.completionPolicy.questIds, [
+    'ancient-desert-explorer', 'ancient-desert-collector', 'ancient-desert-discoverer',
+  ]);
+  assert.deepEqual(ancientDesert.completionPolicy.questIds, ANCIENT_DESERT_QUESTS.map(({ id }) => id));
+  const space = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.SPACE);
+  assert.equal(space.completionPolicy.type, THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS);
+  assert.deepEqual(space.completionPolicy.questIds, ['space-explorer', 'space-collector', 'space-discoverer']);
+  assert.deepEqual(space.completionPolicy.questIds, SPACE_QUESTS.map(({ id }) => id));
+  const magicCastle = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.MAGIC_CASTLE);
+  assert.equal(magicCastle.completionPolicy.type, THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS);
+  assert.deepEqual(magicCastle.completionPolicy.questIds, [
+    'magic-castle-explorer', 'magic-castle-collector', 'magic-castle-discoverer',
+  ]);
+  assert.deepEqual(magicCastle.completionPolicy.questIds, MAGIC_CASTLE_QUESTS.map(({ id }) => id));
+  for (const theme of ADVENTURE_THEMES.filter((entry) => ![
+    THEME_IDS.MYSTERY_ISLAND, THEME_IDS.FOREST, THEME_IDS.OCEAN, THEME_IDS.DINOSAUR, THEME_IDS.ANCIENT_DESERT, THEME_IDS.SPACE, THEME_IDS.MAGIC_CASTLE,
+  ].includes(entry.id))) {
     assert.deepEqual(theme.completionPolicy, { type: THEME_COMPLETION_POLICY_TYPES.DEFERRED });
   }
 });
@@ -77,7 +112,7 @@ test('all seven Theme metadata entries satisfy the data contract', () => {
     '🌊 深海探險',
     '🦕 恐龍世界',
     '🏰 魔法城堡',
-    '🚀 太空探險',
+    '🚀 太空冒險',
     '🏜️ 古文明沙漠',
   ]);
   for (const theme of ADVENTURE_THEMES) {

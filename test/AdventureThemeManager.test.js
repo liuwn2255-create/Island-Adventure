@@ -138,3 +138,75 @@ test('completed Theme shows completed label and remains enterable', () => {
   assert.equal(state.actionLabel, '已完成');
   assert.equal(state.canEnter, true);
 });
+
+test('Adventure cards receive safe quest, collectible, and badge summaries from each independent bucket', () => {
+  const manager = new AdventureThemeManager({
+    themeProgress: {
+      [THEME_IDS.MAGIC_CASTLE]: {
+        status: THEME_STATUSES.IN_PROGRESS,
+        quests: {
+          completed: ['magic-castle-explorer'],
+          collectedItemIds: ['magic-collectible-1'],
+        },
+        collections: { collectedItemIds: ['magic-collectible-1', 'magic-collectible-2'] },
+        badges: { unlockedIds: [] },
+      },
+      [THEME_IDS.SPACE]: {
+        status: THEME_STATUSES.COMPLETED,
+        completion: { completed: true },
+        quests: { completed: ['space-explorer', 'space-collector'] },
+        collections: { collectedItemIds: ['space-1', 'space-2', 'space-3', 'space-4', 'space-5'] },
+        badges: { unlockedIds: ['space-explorer'] },
+      },
+    },
+  });
+
+  const castle = manager.getThemeState(THEME_IDS.MAGIC_CASTLE);
+  assert.equal(castle.completed, false);
+  assert.deepEqual(castle.questProgress, { completed: 1, total: 3 });
+  assert.deepEqual(castle.collectibleProgress, { collected: 2, total: 5 });
+  assert.equal(castle.hasBadge, false);
+  assert.equal(castle.actionLabel, '繼續探險');
+
+  const space = manager.getThemeState(THEME_IDS.SPACE);
+  assert.equal(space.completed, true);
+  assert.deepEqual(space.questProgress, { completed: 3, total: 3 });
+  assert.deepEqual(space.collectibleProgress, { collected: 5, total: 5 });
+  assert.equal(space.hasBadge, true);
+  assert.equal(space.actionLabel, '已完成');
+});
+
+test('Adventure progress summaries safely use Island and Forest inventory counts when collection IDs are absent', () => {
+  const manager = new AdventureThemeManager({
+    themeProgress: {
+      [THEME_IDS.MYSTERY_ISLAND]: {
+        quests: { completed: ['crystal-explorer', 'collector'] },
+        inventory: { counts: { 'ancient-coin': 3, 'mysterious-crystal': 2, 'pretty-shell': 0 } },
+      },
+      [THEME_IDS.FOREST]: {
+        quests: null,
+        inventory: { counts: { 'forest-seed': 1, 'forest-flower': 1 } },
+        badges: null,
+      },
+    },
+  });
+  assert.deepEqual(manager.getThemeState(THEME_IDS.MYSTERY_ISLAND).questProgress, { completed: 2, total: 3 });
+  assert.deepEqual(manager.getThemeState(THEME_IDS.MYSTERY_ISLAND).collectibleProgress, { collected: 5, total: 12 });
+  assert.deepEqual(manager.getThemeState(THEME_IDS.FOREST).questProgress, { completed: 0, total: 3 });
+  assert.deepEqual(manager.getThemeState(THEME_IDS.FOREST).collectibleProgress, { collected: 2, total: 5 });
+  assert.equal(manager.getThemeState(THEME_IDS.FOREST).hasBadge, false);
+});
+
+test('summary derivation does not mutate Save v2 buckets', () => {
+  const themeProgress = structuredClone({
+    [THEME_IDS.MAGIC_CASTLE]: {
+      status: THEME_STATUSES.IN_PROGRESS,
+      quests: { completed: ['magic-castle-explorer'], collectedItemIds: ['magic-1'] },
+      collections: { collectedItemIds: ['magic-1', 'magic-2'] },
+      badges: { unlockedIds: ['magic-castle-explorer'] },
+    },
+  });
+  const before = structuredClone(themeProgress);
+  new AdventureThemeManager({ themeProgress }).getThemes();
+  assert.deepEqual(themeProgress, before);
+});

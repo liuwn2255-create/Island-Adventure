@@ -1,10 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ThemeRuntimeRegistry } from '../src/adventure/ThemeRuntimeRegistry.js';
-import { PlaceholderThemeRuntime } from '../src/adventure/PlaceholderThemeRuntime.js';
 import { MysteryIslandRuntime } from '../src/adventure/MysteryIslandRuntime.js';
 import { ForestRuntime } from '../src/themes/forest/ForestRuntime.js';
+import { OceanRuntime } from '../src/themes/ocean/OceanRuntime.js';
+import { DinosaurRuntime } from '../src/themes/dinosaur/DinosaurRuntime.js';
+import { AncientDesertRuntime } from '../src/themes/ancient-desert/AncientDesertRuntime.js';
+import { SpaceRuntime } from '../src/themes/space/SpaceRuntime.js';
+import { MagicCastleRuntime } from '../src/themes/magic-castle/MagicCastleRuntime.js';
 import { THEME_IDS } from '../src/adventure/adventureConfig.js';
+import { readFile } from 'node:fs/promises';
 
 test('registry can be created', () => {
   assert.ok(new ThemeRuntimeRegistry() instanceof ThemeRuntimeRegistry);
@@ -74,18 +79,30 @@ test('register rejects a non-function factory', () => {
   }
 });
 
-test('Mystery Island and Forest route separately while five themes remain placeholders', () => {
+test('all seven worlds route to their dedicated playable runtimes', () => {
   const registry = new ThemeRuntimeRegistry();
-  const app = {};
-  const placeholderFactory = () => new PlaceholderThemeRuntime({ app, createUI() {} });
-  for (const themeId of [THEME_IDS.OCEAN, THEME_IDS.DINOSAUR, THEME_IDS.MAGIC_CASTLE, THEME_IDS.SPACE, THEME_IDS.ANCIENT_DESERT]) {
-    registry.register(themeId, placeholderFactory);
-  }
+  registry.register(THEME_IDS.OCEAN, () => new OceanRuntime());
+  registry.register(THEME_IDS.DINOSAUR, () => new DinosaurRuntime());
+  registry.register(THEME_IDS.ANCIENT_DESERT, () => new AncientDesertRuntime());
+  registry.register(THEME_IDS.SPACE, () => new SpaceRuntime());
+  registry.register(THEME_IDS.MAGIC_CASTLE, () => new MagicCastleRuntime());
   registry.register(THEME_IDS.FOREST, () => new ForestRuntime());
   registry.register(THEME_IDS.MYSTERY_ISLAND, () => new MysteryIslandRuntime({ startAdventure() {} }));
   assert.ok(registry.create(THEME_IDS.FOREST) instanceof ForestRuntime);
   assert.ok(registry.create(THEME_IDS.MYSTERY_ISLAND) instanceof MysteryIslandRuntime);
-  for (const themeId of [THEME_IDS.OCEAN, THEME_IDS.DINOSAUR, THEME_IDS.MAGIC_CASTLE, THEME_IDS.SPACE, THEME_IDS.ANCIENT_DESERT]) {
-    assert.ok(registry.create(themeId) instanceof PlaceholderThemeRuntime, themeId);
-  }
+  assert.ok(registry.create(THEME_IDS.OCEAN) instanceof OceanRuntime);
+  assert.ok(registry.create(THEME_IDS.DINOSAUR) instanceof DinosaurRuntime);
+  assert.ok(registry.create(THEME_IDS.ANCIENT_DESERT) instanceof AncientDesertRuntime);
+  assert.ok(registry.create(THEME_IDS.SPACE) instanceof SpaceRuntime);
+  assert.ok(registry.create(THEME_IDS.MAGIC_CASTLE) instanceof MagicCastleRuntime);
+});
+
+test('main routes Ancient Desert to its Runtime without changing Save or completion routing', async () => {
+  const source = await readFile(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(source, /import \{ AncientDesertRuntime \} from '\.\/themes\/ancient-desert\/AncientDesertRuntime\.js';/);
+  assert.match(source, /themeRuntimeRegistry\.register\(THEME_IDS\.ANCIENT_DESERT, \(\) => new AncientDesertRuntime\(/);
+  assert.match(source, /if \(theme\.id === THEME_IDS\.ANCIENT_DESERT\)[\s\S]*?activeThemeRuntime\.enter\(/);
+  assert.match(source, /if \(theme\.id === THEME_IDS\.ANCIENT_DESERT\)[\s\S]*?restoreData: latestData,[\s\S]*?saveManager,/);
+  assert.match(source, /if \(theme\.id === THEME_IDS\.ANCIENT_DESERT\)[\s\S]*?showAdventureWorld\(character\);/);
+  assert.match(source, /id !== THEME_IDS\.ANCIENT_DESERT/);
 });

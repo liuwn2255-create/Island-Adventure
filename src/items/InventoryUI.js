@@ -17,7 +17,7 @@ export class InventoryUI {
       <section class="inventory-panel" role="dialog" aria-modal="true" aria-labelledby="inventory-title">
         <button class="inventory-close" type="button" aria-label="關閉背包">×</button>
         <div class="inventory-emblem" aria-hidden="true">🎒</div>
-        <p class="inventory-eyebrow">你的島嶼發現</p>
+        <p class="inventory-eyebrow">你的探索發現</p>
         <h2 id="inventory-title">背包</h2>
         <ul class="inventory-list" data-inventory-list></ul>
         <button class="inventory-done" type="button">關閉</button>

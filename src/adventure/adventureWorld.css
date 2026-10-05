@@ -36,6 +36,12 @@
   font-size: clamp(1rem, 3.5vw, 1.25rem);
 }
 
+.adventure-world-scroll-hint {
+  margin-inline-start: 0.45em;
+  color: #67877b;
+  font-size: 0.78em;
+}
+
 .adventure-theme-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -64,6 +70,39 @@
   flex: 1;
   margin: 0 0 18px;
   line-height: 1.55;
+}
+
+.adventure-theme-card.is-completed {
+  border-color: rgba(38, 115, 91, 0.42);
+  box-shadow: 0 12px 28px rgba(31, 76, 65, 0.12), inset 0 0 0 1px rgba(38, 115, 91, 0.12);
+}
+
+.adventure-theme-summary {
+  display: grid;
+  width: 100%;
+  gap: 7px;
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: rgba(232, 243, 237, 0.8);
+}
+
+.adventure-theme-summary p {
+  margin: 0;
+  color: #49635a;
+  font-size: 0.94rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.adventure-theme-summary .adventure-theme-summary-status {
+  color: #58645f;
+  font-weight: 800;
+}
+
+.adventure-theme-summary .adventure-theme-summary-status.is-completed {
+  color: #1f6b50;
 }
 
 .adventure-theme-card button {

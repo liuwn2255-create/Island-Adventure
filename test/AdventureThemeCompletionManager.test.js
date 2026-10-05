@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { AdventureThemeCompletionManager } from '../src/adventure/AdventureThemeCompletionManager.js';
 import { ADVENTURE_THEMES, THEME_COMPLETION_POLICY_TYPES, THEME_IDS } from '../src/adventure/adventureConfig.js';
+import { OCEAN_THEME } from '../src/themes/ocean/oceanConfig.js';
+import { MAGIC_CASTLE_QUESTS } from '../src/themes/magic-castle/magicCastleQuestConfig.js';
 
 const REQUIRED_QUEST_IDS = ['crystal-explorer', 'island-adventurer', 'collector'];
 const FOREST_REQUIRED_QUEST_IDS = ['forest-explorer', 'forest-collector', 'forest-discoverer'];
+const OCEAN_REQUIRED_QUEST_IDS = ['ocean-explorer', 'ocean-collector', 'ocean-discoverer'];
 const makeSnapshot = (completedIds = REQUIRED_QUEST_IDS) =>
   REQUIRED_QUEST_IDS.map((id) => ({ id, completed: completedIds.includes(id) }));
 const makeForestSnapshot = (completedIds = FOREST_REQUIRED_QUEST_IDS) =>
@@ -51,20 +54,59 @@ test('Forest completes only when all three Forest quests are complete', () => {
   assert.equal(incomplete.completion, null);
 });
 
-test('deferred themes return the deferred reason', () => {
-  const manager = new AdventureThemeCompletionManager();
-  for (const themeId of [
-    THEME_IDS.OCEAN,
-    THEME_IDS.DINOSAUR,
-    THEME_IDS.MAGIC_CASTLE,
-    THEME_IDS.SPACE,
-    THEME_IDS.ANCIENT_DESERT,
-  ]) {
-    assert.deepEqual(manager.evaluateCompletion(themeId), {
-      completed: false, themeId, reason: 'completion-policy-deferred', completion: null,
-    });
-    assert.equal(manager.canComplete(themeId), false);
+test('Magic Castle requires its three configured quests for completion', () => {
+  const requiredIds = MAGIC_CASTLE_QUESTS.map(({ id }) => id);
+  assert.deepEqual(ADVENTURE_THEMES.find(({ id }) => id === THEME_IDS.MAGIC_CASTLE).completionPolicy, {
+    type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+    questIds: requiredIds,
+  });
+  for (let count = 0; count < requiredIds.length; count += 1) {
+    const snapshot = requiredIds.map((id, index) => ({ id, completed: index < count }));
+    assert.equal(new AdventureThemeCompletionManager({ questSnapshot: snapshot }).evaluateCompletion(THEME_IDS.MAGIC_CASTLE).completed, false);
   }
+  const complete = new AdventureThemeCompletionManager({
+    questSnapshot: requiredIds.map((id) => ({ id, completed: true })),
+    clock: () => 'castle-time',
+  }).evaluateCompletion(THEME_IDS.MAGIC_CASTLE);
+  assert.equal(complete.completed, true);
+  assert.equal(complete.completion.completedAt, 'castle-time');
+});
+
+test('Ocean completes only when all three required Ocean quests exist and are complete', () => {
+  const policy = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.OCEAN).completionPolicy;
+  assert.deepEqual(policy, {
+    type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+    questIds: OCEAN_REQUIRED_QUEST_IDS,
+  });
+  assert.deepEqual(OCEAN_THEME.completionPolicy.questIds, OCEAN_REQUIRED_QUEST_IDS);
+
+  for (const missingQuestId of OCEAN_REQUIRED_QUEST_IDS) {
+    const snapshot = OCEAN_REQUIRED_QUEST_IDS
+      .filter((id) => id !== missingQuestId)
+      .map((id) => ({ id, completed: true }));
+    const result = new AdventureThemeCompletionManager({ questSnapshot: snapshot })
+      .evaluateCompletion(THEME_IDS.OCEAN);
+    assert.equal(result.completed, false);
+    assert.equal(result.reason, 'required-quest-not-found');
+    assert.deepEqual(result.missingQuestIds, [missingQuestId]);
+  }
+
+  for (const incompleteQuestId of OCEAN_REQUIRED_QUEST_IDS) {
+    const snapshot = OCEAN_REQUIRED_QUEST_IDS.map((id) => ({ id, completed: id !== incompleteQuestId }));
+    const result = new AdventureThemeCompletionManager({ questSnapshot: snapshot })
+      .evaluateCompletion(THEME_IDS.OCEAN);
+    assert.equal(result.completed, false);
+    assert.equal(result.reason, 'required-quests-incomplete');
+  }
+
+  const complete = new AdventureThemeCompletionManager({
+    questSnapshot: OCEAN_REQUIRED_QUEST_IDS.map((id) => ({ id, completed: true })),
+    clock: () => 'ocean-time',
+  }).evaluateCompletion(THEME_IDS.OCEAN);
+  assert.equal(complete.completed, true);
+  assert.equal(complete.themeId, THEME_IDS.OCEAN);
+  assert.equal(complete.completion.completedAt, 'ocean-time');
+  assert.equal(complete.completion.completionPolicy, 'required-quests');
 });
 
 test('unknown theme returns theme-not-found', () => {
@@ -132,7 +174,7 @@ test('getCompletionResult agrees with evaluateCompletion', () => {
   assert.deepEqual(manager.getCompletionResult(THEME_IDS.MYSTERY_ISLAND), manager.evaluateCompletion(THEME_IDS.MYSTERY_ISLAND));
 });
 
-test('Mystery Island and Forest use their required-quests policies', () => {
+test('Mystery Island, Forest, Ocean, Ancient Desert, Space, and Magic Castle use their required-quests policies', () => {
   const mystery = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.MYSTERY_ISLAND);
   assert.deepEqual(mystery.completionPolicy, {
     type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
@@ -143,15 +185,26 @@ test('Mystery Island and Forest use their required-quests policies', () => {
     type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
     questIds: FOREST_REQUIRED_QUEST_IDS,
   });
-  for (const themeId of [
-    THEME_IDS.OCEAN,
-    THEME_IDS.DINOSAUR,
-    THEME_IDS.MAGIC_CASTLE,
-    THEME_IDS.SPACE,
-    THEME_IDS.ANCIENT_DESERT,
-  ]) {
-    assert.equal(ADVENTURE_THEMES.find((theme) => theme.id === themeId).completionPolicy.type, THEME_COMPLETION_POLICY_TYPES.DEFERRED);
-  }
+  const ocean = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.OCEAN);
+  assert.deepEqual(ocean.completionPolicy, {
+    type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+    questIds: OCEAN_REQUIRED_QUEST_IDS,
+  });
+  const ancientDesert = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.ANCIENT_DESERT);
+  assert.deepEqual(ancientDesert.completionPolicy, {
+    type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+    questIds: ['ancient-desert-explorer', 'ancient-desert-collector', 'ancient-desert-discoverer'],
+  });
+  const space = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.SPACE);
+  assert.deepEqual(space.completionPolicy, {
+    type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+    questIds: ['space-explorer', 'space-collector', 'space-discoverer'],
+  });
+  const magicCastle = ADVENTURE_THEMES.find((theme) => theme.id === THEME_IDS.MAGIC_CASTLE);
+  assert.deepEqual(magicCastle.completionPolicy, {
+    type: THEME_COMPLETION_POLICY_TYPES.REQUIRED_QUESTS,
+    questIds: MAGIC_CASTLE_QUESTS.map(({ id }) => id),
+  });
 });
 
 test('valid stored completion summary is reused only while required quests are complete', () => {

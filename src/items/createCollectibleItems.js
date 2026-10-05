@@ -78,16 +78,20 @@ const builders = {
   'special-flower': addFlower,
 };
 
-export function createCollectibleItems(scene, heightAt, spawns = ITEM_SPAWNS) {
+export function createCollectibleItems(scene, heightAt, spawns = ITEM_SPAWNS, itemTypes = ITEM_TYPES, visualBuilders = {}) {
+  const typesById = new Map(itemTypes.map((itemType) => [itemType.id, itemType]));
   return spawns.map((spawn, index) => {
-    const type = ITEM_TYPES.find((itemType) => itemType.id === spawn.type);
+    const type = typesById.get(spawn.type);
     if (!type) throw new Error(`未知的探索物品種類：${spawn.type}`);
+    const visualType = type.visualType ?? spawn.type;
+    const builder = visualBuilders[visualType] ?? builders[visualType];
+    if (!builder) throw new Error(`未知的探索物品外觀：${type.visualType ?? spawn.type}`);
     const groundY = heightAt(spawn.position.x, spawn.position.z);
     const object3D = new THREE.Group();
     object3D.name = `Collectible-${spawn.id}`;
     object3D.position.set(spawn.position.x, groundY, spawn.position.z);
     object3D.rotation.y = index * 0.67;
-    builders[spawn.type](object3D, index);
+    builder(object3D, index);
     object3D.traverse((child) => {
       if (child.isMesh) child.receiveShadow = true;
     });

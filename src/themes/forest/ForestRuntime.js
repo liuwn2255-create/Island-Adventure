@@ -21,7 +21,8 @@ import {
   THEME_STATUSES,
 } from '../../adventure/adventureConfig.js';
 import { AdventureThemeCompletionManager } from '../../adventure/AdventureThemeCompletionManager.js';
-import { FOREST_COLLECTIBLES, FOREST_QUESTS } from './forestConfig.js';
+import { FOREST_COLLECTIBLE_TYPES, FOREST_COLLECTIBLES, FOREST_QUESTS } from './forestConfig.js';
+import { FOREST_COLLECTIBLE_VISUAL_BUILDERS } from './createForestCollectibleVisuals.js';
 import { createForestScene } from './createForestScene.js';
 
 function createInitialSaveData(characterId) {
@@ -32,6 +33,22 @@ function createInitialSaveData(characterId) {
     characterId,
     themeProgress: { [THEME_IDS.MYSTERY_ISLAND]: mysteryIsland },
   };
+}
+
+function getForestInventoryRestoreState(progress) {
+  const inventory = progress?.inventory;
+  const savedCounts = inventory?.counts;
+  if (!savedCounts || FOREST_COLLECTIBLE_TYPES.some(({ id }) => Object.hasOwn(savedCounts, id))) return inventory;
+
+  // Older Forest saves counted shared Island item types. Stable collectible IDs
+  // let us rebuild those counts using the new Forest-specific type IDs.
+  const collectedIds = new Set(progress?.collections?.collectedItemIds ?? []);
+  if (collectedIds.size === 0) return inventory;
+  const counts = Object.fromEntries(FOREST_COLLECTIBLE_TYPES.map(({ id }) => [id, 0]));
+  for (const spawn of FOREST_COLLECTIBLES) {
+    if (collectedIds.has(spawn.id)) counts[spawn.type] += 1;
+  }
+  return { ...inventory, counts };
 }
 
 function disposeSceneResources(scene) {
@@ -154,10 +171,10 @@ export class ForestRuntime {
         onCameraChange: (deltaX, deltaY) => this.cameraController.rotateBy(deltaX, deltaY),
       });
 
-      this.items = createCollectibleItems(this.scene, this.groundHeightAt, FOREST_COLLECTIBLES);
-      this.inventoryManager = new InventoryManager();
+      this.items = createCollectibleItems(this.scene, this.groundHeightAt, FOREST_COLLECTIBLES, FOREST_COLLECTIBLE_TYPES, FOREST_COLLECTIBLE_VISUAL_BUILDERS);
+      this.inventoryManager = new InventoryManager(FOREST_COLLECTIBLE_TYPES);
       const forestProgress = this.getRestoreForestProgress();
-      this.inventoryManager.loadState(forestProgress?.inventory);
+      this.inventoryManager.loadState(getForestInventoryRestoreState(forestProgress));
       this.questManager = new QuestManager(FOREST_QUESTS);
       this.questManager.loadState(forestProgress?.quests);
       this.interactionManager = await this.interactionManagerFactory({
@@ -182,6 +199,7 @@ export class ForestRuntime {
         panelCoordinator: this.panelCoordinator,
       });
       this.createReturnButton();
+      this.createMovementHint();
 
       const visual = await this.playerModelLoader(this.character.modelPath, { yawOffset: PLAYER_MODEL_FORWARD_OFFSET });
       if (this.isDisposed) {
@@ -225,6 +243,19 @@ export class ForestRuntime {
     this.app.appendChild(this.returnButton);
   }
 
+  createMovementHint() {
+    this.movementHint = this.document.createElement('div');
+    this.movementHint.id = 'status';
+    this.movementHint.setAttribute('role', 'status');
+    this.movementHint.textContent = 'W / A / S / D 移動';
+    this.movementHint.style.top = '68px';
+    this.movementHint.style.bottom = 'auto';
+    this.app.appendChild(this.movementHint);
+    this.movementHintTimer = this.window.setTimeout(() => {
+      this.movementHint?.classList.add('hidden');
+      this.movementHintTimer = null;
+    }, 1800);
+  }
   setupAutosave() {
     let previousCounts = this.inventoryManager.getCounts();
     this.unsubscribers.push(this.inventoryManager.subscribe((counts) => {
@@ -329,6 +360,10 @@ export class ForestRuntime {
     if (this.isDisposed) return;
     this.isDisposed = true;
     this.isActive = false;
+    this.window?.clearTimeout(this.movementHintTimer);
+    this.movementHintTimer = null;
+    this.movementHint?.remove();
+    this.movementHint = null;
     this.renderer?.setAnimationLoop(null);
     if (this.onResize) this.window?.removeEventListener('resize', this.onResize);
     for (const unsubscribe of this.unsubscribers ?? []) unsubscribe();

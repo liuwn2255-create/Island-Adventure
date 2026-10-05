@@ -1,5 +1,6 @@
 import { Clock } from 'three';
 import './style.css';
+import './audio/audio.css';
 import './adventure/adventureWorld.css';
 import { CHARACTERS } from './characters/characterConfig.js';
 import { createCharacterSelectionScreen } from './characters/CharacterSelection.js';
@@ -47,6 +48,11 @@ import { AdventureWorldUI } from './adventure/AdventureWorldUI.js';
 import { ThemeRuntimeRegistry } from './adventure/ThemeRuntimeRegistry.js';
 import { MysteryIslandRuntime } from './adventure/MysteryIslandRuntime.js';
 import { ForestRuntime } from './themes/forest/ForestRuntime.js';
+import { OceanRuntime } from './themes/ocean/OceanRuntime.js';
+import { DinosaurRuntime } from './themes/dinosaur/DinosaurRuntime.js';
+import { AncientDesertRuntime } from './themes/ancient-desert/AncientDesertRuntime.js';
+import { SpaceRuntime } from './themes/space/SpaceRuntime.js';
+import { MagicCastleRuntime } from './themes/magic-castle/MagicCastleRuntime.js';
 import { PlaceholderThemeRuntime } from './adventure/PlaceholderThemeRuntime.js';
 import { AdventureThemePlaceholderUI } from './adventure/AdventureThemePlaceholderUI.js';
 import { ExitAdventureUI } from './ui/ExitAdventureUI.js';
@@ -59,6 +65,7 @@ import { ISLAND_RESIDENT_CONFIG } from './npc/NPCConfig.js';
 
 const app = document.querySelector('#app');
 const audioManager = new AudioManager({ app });
+audioManager.mount();
 const gameState = new GameState();
 gameState.subscribe((state) => { app.dataset.gameState = state; });
 let saveToast;
@@ -90,12 +97,41 @@ themeRuntimeRegistry.register(THEME_IDS.FOREST, () => new ForestRuntime({
   questUIFactory: (options) => new QuestUI(options),
   inventoryUIFactory: (options) => new InventoryUI(options),
 }));
+themeRuntimeRegistry.register(THEME_IDS.OCEAN, () => new OceanRuntime({
+  mobileControlsFactory: (options) => new MobileControls(options),
+  questUIFactory: (options) => new QuestUI(options),
+  inventoryUIFactory: (options) => new InventoryUI(options),
+}));
+themeRuntimeRegistry.register(THEME_IDS.DINOSAUR, () => new DinosaurRuntime({
+  mobileControlsFactory: (options) => new MobileControls(options),
+  questUIFactory: (options) => new QuestUI(options),
+  inventoryUIFactory: (options) => new InventoryUI(options),
+}));
+themeRuntimeRegistry.register(THEME_IDS.ANCIENT_DESERT, () => new AncientDesertRuntime({
+  mobileControlsFactory: (options) => new MobileControls(options),
+  questUIFactory: (options) => new QuestUI(options),
+  inventoryUIFactory: (options) => new InventoryUI(options),
+}));
+themeRuntimeRegistry.register(THEME_IDS.SPACE, () => new SpaceRuntime({
+  mobileControlsFactory: (options) => new MobileControls(options),
+  questUIFactory: (options) => new QuestUI(options),
+  inventoryUIFactory: (options) => new InventoryUI(options),
+}));
+themeRuntimeRegistry.register(THEME_IDS.MAGIC_CASTLE, () => new MagicCastleRuntime({
+  mobileControlsFactory: (options) => new MobileControls(options),
+  questUIFactory: (options) => new QuestUI(options),
+  inventoryUIFactory: (options) => new InventoryUI(options),
+}));
 const createPlaceholderThemeRuntime = () => new PlaceholderThemeRuntime({
   app,
   createUI: (options) => new AdventureThemePlaceholderUI(options),
 });
 for (const { id } of ADVENTURE_THEMES) {
-  if (id !== THEME_IDS.MYSTERY_ISLAND && id !== THEME_IDS.FOREST) themeRuntimeRegistry.register(id, createPlaceholderThemeRuntime);
+  if (id !== THEME_IDS.MYSTERY_ISLAND && id !== THEME_IDS.FOREST && id !== THEME_IDS.OCEAN
+    && id !== THEME_IDS.DINOSAUR && id !== THEME_IDS.ANCIENT_DESERT && id !== THEME_IDS.SPACE
+    && id !== THEME_IDS.MAGIC_CASTLE) {
+    themeRuntimeRegistry.register(id, createPlaceholderThemeRuntime);
+  }
 }
 
 function showGameStartScreen() {
@@ -118,9 +154,6 @@ async function startAdventure(character, restoreData = null) {
   let mysteryIslandStatus = restoredThemeProgress?.status ?? THEME_STATUSES.IN_PROGRESS;
   let mysteryIslandCompletion = restoredThemeProgress?.completion ?? null;
   const { scene, camera, renderer, groundHeightAt } = createIslandScene(app);
-  audioManager.mount();
-  // The audio control may have been detached with the paused HUD on return home.
-  if (audioManager.button) app.appendChild(audioManager.button);
   const status = document.createElement('div');
   status.id = 'status';
   status.setAttribute('role', 'status');
@@ -659,6 +692,91 @@ function showAdventureWorld(character, restoreData = null) {
           onBack: () => {
             activeThemeRuntime = null;
             showAdventureWorld(character);
+          },
+        });
+      }
+
+      if (theme.id === THEME_IDS.OCEAN) {
+        return activeThemeRuntime.enter({
+          theme,
+          character,
+          restoreData: latestData,
+          app,
+          saveManager,
+          window,
+          document,
+          gameState,
+          onBack: () => {
+            activeThemeRuntime = null;
+            showAdventureWorld(character);
+          },
+        });
+      }
+
+      if (theme.id === THEME_IDS.DINOSAUR) {
+        return activeThemeRuntime.enter({
+          theme,
+          character,
+          restoreData: latestData,
+          app,
+          saveManager,
+          gameState,
+          window,
+          document,
+          onBack: () => {
+            activeThemeRuntime = null;
+            showAdventureWorld(character, latestData);
+          },
+        });
+      }
+
+      if (theme.id === THEME_IDS.ANCIENT_DESERT) {
+        return activeThemeRuntime.enter({
+          theme,
+          character,
+          restoreData: latestData,
+          saveManager,
+          app,
+          gameState,
+          window,
+          document,
+          onBack: () => {
+            activeThemeRuntime = null;
+            showAdventureWorld(character);
+          },
+        });
+      }
+
+      if (theme.id === THEME_IDS.SPACE) {
+        return activeThemeRuntime.enter({
+          theme,
+          character,
+          restoreData: latestData,
+          saveManager,
+          app,
+          gameState,
+          window,
+          document,
+          onBack: () => {
+            activeThemeRuntime = null;
+            showAdventureWorld(character);
+          },
+        });
+      }
+
+      if (theme.id === THEME_IDS.MAGIC_CASTLE) {
+        return activeThemeRuntime.enter({
+          theme,
+          character,
+          restoreData: latestData,
+          saveManager,
+          app,
+          gameState,
+          window,
+          document,
+          onBack: () => {
+            activeThemeRuntime = null;
+            showAdventureWorld(character, latestData);
           },
         });
       }

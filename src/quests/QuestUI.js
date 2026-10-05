@@ -1,13 +1,22 @@
 import './quest.css';
 
 export class QuestUI {
-  constructor({ app, questManager, panelCoordinator, showCompletionToast = true }) {
+  constructor({
+    app,
+    questManager,
+    panelCoordinator,
+    showCompletionToast = true,
+    worldName = null,
+    showProgressSummary = false,
+  }) {
     this.questManager = questManager;
     this.isOpen = false;
     this.completionQueue = [];
     this.toastTimer = null;
     this.isShowingToast = false;
     this.showCompletionToast = showCompletionToast;
+    this.worldName = worldName;
+    this.showProgressSummary = showProgressSummary;
 
     this.toggle = document.createElement('button');
     this.toggle.className = 'quest-toggle';
@@ -21,7 +30,7 @@ export class QuestUI {
     this.panel.id = 'quest-panel';
     this.panel.hidden = true;
     this.panel.setAttribute('aria-label', '探險任務');
-    this.panel.innerHTML = '<header class="quest-panel-header"><h2>📜 探險任務</h2><button class="quest-close" type="button" aria-label="關閉任務">×</button></header><div class="quest-list"></div>';
+    this.panel.innerHTML = '<header class="quest-panel-header"><h2>📜 探險任務</h2><button class="quest-close" type="button" aria-label="關閉任務">×</button></header><p class="quest-world-name" hidden></p><p class="quest-overview" hidden></p><div class="quest-list"></div>';
 
     this.toast = document.createElement('div');
     this.toast.className = 'quest-completion-toast';
@@ -31,6 +40,14 @@ export class QuestUI {
 
     app.append(this.toggle, this.panel, this.toast);
     this.list = this.panel.querySelector('.quest-list');
+    this.worldHeading = this.panel.querySelector('.quest-world-name');
+    this.overview = this.panel.querySelector('.quest-overview');
+    this.worldHeading.hidden = true;
+    this.overview.hidden = true;
+    if (this.showProgressSummary) {
+      this.worldHeading.hidden = !this.worldName;
+      this.worldHeading.textContent = this.worldName ?? '';
+    }
     this.closeButton = this.panel.querySelector('.quest-close');
     this.onToggle = () => panelCoordinator.toggle('quests');
     this.onClose = () => {
@@ -58,6 +75,12 @@ export class QuestUI {
   }
 
   render(quests) {
+    const completedCount = quests.filter(({ completed }) => completed).length;
+    if (this.showProgressSummary) {
+      this.overview.hidden = false;
+      this.overview.textContent = `任務進度 ${completedCount}/${quests.length}`;
+      this.overview.setAttribute('aria-live', 'polite');
+    }
     const cards = quests.map((quest) => {
       const card = document.createElement('article');
       card.className = `quest-card${quest.completed ? ' is-complete' : ''}`;
@@ -69,7 +92,9 @@ export class QuestUI {
       description.textContent = quest.description;
       const progress = document.createElement('p');
       progress.className = 'quest-progress';
-      progress.textContent = quest.completed ? '✓ 已完成' : `進度：${quest.progress} / ${quest.target}`;
+      progress.textContent = quest.completed
+        ? (this.showProgressSummary ? '✅ 已完成' : '✓ 已完成')
+        : (this.showProgressSummary ? `⭕ 尚未完成 · 進度：${quest.progress} / ${quest.target}` : `進度：${quest.progress} / ${quest.target}`);
       card.append(heading, description, progress);
 
       if (quest.completed && !this.seenCompleted.has(quest.id)) {

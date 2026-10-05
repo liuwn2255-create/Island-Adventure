@@ -1,5 +1,4 @@
 import { AUDIO_CONFIG, SFX_NAMES } from './audioConfig.js';
-import './audio.css';
 
 const MUSIC_NOTES = [261.63, 329.63, 392, 329.63, 293.66, 349.23, 440, 349.23];
 const SFX_NOTES = Object.freeze({
@@ -50,7 +49,10 @@ export class AudioManager {
     };
     this.button.addEventListener('click', this.onToggleMute);
     this.updateButton();
-    this.app.append(this.button);
+    // Keep the global control outside #app so route-level replaceChildren() calls
+    // cannot detach it when the active theme changes.
+    const mountTarget = this.app.ownerDocument?.body ?? this.app;
+    mountTarget.append(this.button);
   }
 
   async activate() {

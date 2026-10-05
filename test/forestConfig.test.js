@@ -6,6 +6,7 @@ import { QUESTS } from '../src/quests/questConfig.js';
 import { ISLAND_WALKABLE_RADIUS } from '../src/config/gameConfig.js';
 import { THEME_COMPLETION_POLICY_TYPES, THEME_IDS } from '../src/adventure/adventureConfig.js';
 import {
+  FOREST_COLLECTIBLE_TYPES,
   FOREST_COLLECTIBLES,
   FOREST_LANDMARKS,
   FOREST_QUESTS,
@@ -33,7 +34,7 @@ test('Forest has at least three unique landmarks with positions inside the walka
   assert.ok(FOREST_LANDMARKS.every(({ id }) => !islandLandmarkIds.has(id)));
 });
 
-test('Forest has at least five unique collectible spawns using existing item types', () => {
+test('Forest has five Forest-specific collectible types and unique spawns', () => {
   assert.ok(FOREST_COLLECTIBLES.length >= 5);
   assert.deepEqual(FOREST_COLLECTIBLES.map(({ id }) => id), [
     'forest-collectible-1',
@@ -44,13 +45,26 @@ test('Forest has at least five unique collectible spawns using existing item typ
   ]);
   assert.equal(new Set(FOREST_COLLECTIBLES.map(({ id }) => id)).size, FOREST_COLLECTIBLES.length);
   const islandItemIds = new Set(ITEM_SPAWNS.map(({ id }) => id));
-  const itemTypeIds = new Set(ITEM_TYPES.map(({ id }) => id));
+  const collectibleTypeIds = FOREST_COLLECTIBLE_TYPES.map(({ id }) => id);
+  assert.equal(FOREST_COLLECTIBLE_TYPES.length, 5);
+  assert.equal(new Set(collectibleTypeIds).size, 5);
+  assert.ok(FOREST_COLLECTIBLE_TYPES.every(({ id, name }) => (
+    id.startsWith('forest-') && name && !ITEM_TYPES.some((itemType) => itemType.id === id)
+  )));
   assert.ok(FOREST_COLLECTIBLES.every(({ id, type, position, interactionDistance }) => (
     !islandItemIds.has(id)
-    && itemTypeIds.has(type)
+    && collectibleTypeIds.includes(type)
     && interactionDistance === ITEM_PICKUP_DISTANCE
     && isWithinPlayerWalkableRadius(position)
   )));
+  assert.deepEqual(FOREST_COLLECTIBLE_TYPES.map(({ id, name }) => ({ id, name })), [
+    { id: 'forest-magic-mushroom', name: '魔法蘑菇' },
+    { id: 'forest-ancient-seed', name: '古樹種子' },
+    { id: 'forest-butterfly-specimen', name: '蝴蝶標本' },
+    { id: 'forest-forest-feather', name: '森林羽毛' },
+    { id: 'forest-fairy-leaf', name: '精靈葉片' },
+  ]);
+  assert.ok(FOREST_COLLECTIBLE_TYPES.every((type) => !ITEM_TYPES.some((islandType) => islandType.name === type.name)));
 });
 
 test('Forest quests use unique Forest-prefixed IDs and QuestManager-supported types', () => {

@@ -36,6 +36,8 @@
 .quest-panel[hidden], .quest-completion-toast[hidden] { display: none; }
 .quest-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .quest-panel-header h2 { margin: 0; font-size: 18px; font-weight: 900; }
+.quest-world-name { margin: 0 0 5px; color: #315f59; font-size: 15px; font-weight: 900; line-height: 1.4; }
+.quest-overview { margin: 0 0 12px; color: #4b927d; font-size: 13px; font-weight: 900; }
 .quest-close { display: grid; flex: 0 0 auto; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 50%; color: #6d8589; background: #e7f0e9; font-size: 21px; cursor: pointer; }
 .quest-list { display: grid; gap: 9px; }
 .quest-card { min-width: 0; padding: 11px 12px; border: 1px solid #e2ece3; border-radius: 13px; background: rgb(255 255 255 / 77%); }

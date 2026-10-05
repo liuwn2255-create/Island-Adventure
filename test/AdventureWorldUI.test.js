@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { AdventureWorldUI } from '../src/adventure/AdventureWorldUI.js';
 import { AdventureThemeManager } from '../src/adventure/AdventureThemeManager.js';
-import { ADVENTURE_THEMES, THEME_IDS } from '../src/adventure/adventureConfig.js';
+import { ADVENTURE_THEMES, THEME_IDS, THEME_STATUSES } from '../src/adventure/adventureConfig.js';
 
 class TestElement {
   constructor(tagName) {
@@ -49,6 +49,18 @@ function withDocument(callback) {
 function getCards(ui) {
   return ui.root.children[0].children[1].children;
 }
+
+test('AdventureWorldUI shows one compact scroll hint beside the subtitle', () => {
+  withDocument(() => {
+    const app = new TestElement('div');
+    const ui = new AdventureWorldUI({ app, themeManager: new AdventureThemeManager({ themes: ADVENTURE_THEMES }) });
+    const subtitle = ui.root.children[0].children[0].children[1];
+    const hints = subtitle.children.filter((child) => child.className === 'adventure-world-scroll-hint');
+    assert.equal(hints.length, 1);
+    assert.equal(hints[0].textContent, '↓ 向下探索更多世界');
+    ui.destroy();
+  });
+});
 
 test('AdventureWorldUI renders seven selectable theme cards with start labels', () => {
   withDocument(() => {
@@ -111,6 +123,72 @@ test('AdventureWorldUI keeps all themes clickable when Mystery Island is complet
       button.click();
     }
     assert.deepEqual(selected, Object.values(THEME_IDS));
+    ui.destroy();
+  });
+});
+
+test('seven world cards show completion, quest, collectible, and badge summaries', () => {
+  withDocument(() => {
+    const app = new TestElement('div');
+    const ui = new AdventureWorldUI({
+      app,
+      themeManager: new AdventureThemeManager({
+        themeProgress: {
+          [THEME_IDS.MAGIC_CASTLE]: {
+            status: THEME_STATUSES.IN_PROGRESS,
+            quests: { completed: ['magic-castle-explorer'], collectedItemIds: ['castle-item-1'] },
+            collections: { collectedItemIds: ['castle-item-1', 'castle-item-2'] },
+            badges: { unlockedIds: [] },
+          },
+          [THEME_IDS.SPACE]: {
+            status: THEME_STATUSES.COMPLETED,
+            completion: { completed: true },
+            quests: { completed: ['space-explorer', 'space-collector', 'space-discoverer'] },
+            collections: { collectedItemIds: ['a', 'b', 'c', 'd', 'e'] },
+            badges: { unlockedIds: ['space-explorer'] },
+          },
+        },
+      }),
+    });
+    const cards = getCards(ui);
+    assert.equal(cards.length, 7);
+    assert.deepEqual(cards[0].children[2].children.map(({ textContent }) => textContent), [
+      '⭕ 尚未完成', '任務 0/3', '收藏 0/12', '🏅 尚未取得',
+    ]);
+    const castle = cards[4];
+    assert.deepEqual(castle.children[2].children.map(({ textContent }) => textContent), [
+      '⭕ 尚未完成', '任務 1/3', '收藏 2/5', '🏅 尚未取得',
+    ]);
+    assert.equal(ui.buttons[4].button.textContent, '繼續探險');
+    const space = cards[5];
+    assert.deepEqual(space.children[2].children.map(({ textContent }) => textContent), [
+      '✅ 已完成', '任務 3/3', '收藏 5/5', '🏅 已取得徽章',
+    ]);
+    assert.equal(space.className.includes('is-completed'), true);
+    assert.equal(ui.buttons[5].button.textContent, '已完成');
+    ui.destroy();
+  });
+});
+
+test('Magic Castle summary safely displays zero progress when its Save v2 bucket is absent or incomplete', () => {
+  withDocument(() => {
+    const app = new TestElement('div');
+    const ui = new AdventureWorldUI({
+      app,
+      themeManager: new AdventureThemeManager({
+        themeProgress: {
+          [THEME_IDS.MAGIC_CASTLE]: {
+            quests: null,
+            collections: null,
+            badges: null,
+          },
+        },
+      }),
+    });
+    assert.deepEqual(getCards(ui)[4].children[2].children.map(({ textContent }) => textContent), [
+      '⭕ 尚未完成', '任務 0/3', '收藏 0/5', '🏅 尚未取得',
+    ]);
+    assert.equal(ui.buttons[4].button.textContent, '開始冒險');
     ui.destroy();
   });
 });

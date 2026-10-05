@@ -38,12 +38,20 @@ export const FOREST_LANDMARKS = Object.freeze([
   }),
 ]);
 
+export const FOREST_COLLECTIBLE_TYPES = Object.freeze([
+  Object.freeze({ id: 'forest-magic-mushroom', name: '魔法蘑菇', icon: '🍄', visualType: 'forest-magic-mushroom' }),
+  Object.freeze({ id: 'forest-ancient-seed', name: '古樹種子', icon: '🌰', visualType: 'forest-ancient-seed' }),
+  Object.freeze({ id: 'forest-butterfly-specimen', name: '蝴蝶標本', icon: '🦋', visualType: 'forest-butterfly-specimen' }),
+  Object.freeze({ id: 'forest-forest-feather', name: '森林羽毛', icon: '🪶', visualType: 'forest-forest-feather' }),
+  Object.freeze({ id: 'forest-fairy-leaf', name: '精靈葉片', icon: '🍃', visualType: 'forest-fairy-leaf' }),
+]);
+
 export const FOREST_COLLECTIBLES = Object.freeze([
-  Object.freeze({ id: 'forest-collectible-1', type: 'ancient-coin', position: Object.freeze({ x: -2, z: 1 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
-  Object.freeze({ id: 'forest-collectible-2', type: 'mysterious-crystal', position: Object.freeze({ x: 2, z: 4 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
-  Object.freeze({ id: 'forest-collectible-3', type: 'pretty-shell', position: Object.freeze({ x: 5, z: -1 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
-  Object.freeze({ id: 'forest-collectible-4', type: 'special-flower', position: Object.freeze({ x: -5, z: 2 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
-  Object.freeze({ id: 'forest-collectible-5', type: 'ancient-coin', position: Object.freeze({ x: 1, z: -6 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
+  Object.freeze({ id: 'forest-collectible-1', type: 'forest-magic-mushroom', position: Object.freeze({ x: -2, z: 1 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
+  Object.freeze({ id: 'forest-collectible-2', type: 'forest-ancient-seed', position: Object.freeze({ x: 2, z: 4 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
+  Object.freeze({ id: 'forest-collectible-3', type: 'forest-butterfly-specimen', position: Object.freeze({ x: 5, z: -1 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
+  Object.freeze({ id: 'forest-collectible-4', type: 'forest-forest-feather', position: Object.freeze({ x: -5, z: 2 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
+  Object.freeze({ id: 'forest-collectible-5', type: 'forest-fairy-leaf', position: Object.freeze({ x: 1, z: -6 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
 ]);
 
 export const FOREST_QUESTS = Object.freeze([

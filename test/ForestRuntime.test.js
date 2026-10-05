@@ -4,7 +4,7 @@ import test from 'node:test';
 import { SaveManager } from '../src/save/SaveManager.js';
 import { SAVE_VERSION } from '../src/save/saveConfig.js';
 import { createThemeProgress, THEME_IDS, THEME_STATUSES } from '../src/adventure/adventureConfig.js';
-import { FOREST_COLLECTIBLES, FOREST_QUESTS } from '../src/themes/forest/forestConfig.js';
+import { FOREST_COLLECTIBLE_TYPES, FOREST_COLLECTIBLES, FOREST_QUESTS } from '../src/themes/forest/forestConfig.js';
 import { ForestRuntime } from '../src/themes/forest/ForestRuntime.js';
 
 class FakeElement {
@@ -147,6 +147,19 @@ test('enter creates the Forest scene and player', () => withBrowser(async () => 
   } finally { cleanup(f); }
 }));
 
+test('Forest shows the Island-style WASD hint and removes it on exit', () => withBrowser(async () => {
+  const f = await createFixture();
+  try {
+    const hints = f.app.children.filter((child) => child.id === 'status');
+    assert.equal(hints.length, 1);
+    assert.equal(hints[0].textContent, 'W / A / S / D 移動');
+    assert.equal(hints[0].attributes.get('role'), 'status');
+    assert.equal(hints[0].style.top, '68px');
+    f.runtime.exit();
+    assert.equal(f.app.children.some((child) => child.id === 'status'), false);
+    assert.equal(f.runtime.movementHintTimer, null);
+  } finally { cleanup(f); }
+}));
 test('Forest QuestManager contains only the three Forest quests', () => withBrowser(async () => {
   const f = await createFixture();
   try { assert.deepEqual(f.runtime.questManager.quests.map(({ id }) => id), FOREST_QUESTS.map(({ id }) => id)); }
@@ -157,7 +170,11 @@ test('Forest inventory interactables use Forest collectible IDs', () => withBrow
   const f = await createFixture();
   try {
     assert.deepEqual(f.runtime.interactionManager.items.map(({ id }) => id), FOREST_COLLECTIBLES.map(({ id }) => id));
-    assert.ok(f.runtime.inventoryManager.types.length > 0);
+    assert.deepEqual(f.runtime.inventoryManager.types.map(({ id }) => id), FOREST_COLLECTIBLE_TYPES.map(({ id }) => id));
+    assert.ok(f.runtime.interactionManager.items.every((item) => FOREST_COLLECTIBLE_TYPES.some((type) => type.id === item.type)));
+    assert.deepEqual(f.runtime.interactionManager.items.map(({ object3D }) => object3D.children.find((child) => child.name)?.name), [
+      'magic-mushroom-stem', 'ancient-seed-body', 'butterfly-upper-left-wing', 'forest-feather-shaft', 'fairy-leaf-blade',
+    ]);
   } finally { cleanup(f); }
 }));
 
@@ -171,14 +188,14 @@ test('Forest restore restores quests, inventory, collections, world, and complet
   const forest = {
     ...createThemeProgress(THEME_STATUSES.IN_PROGRESS),
     quests: { progress: { 'forest-explorer': 2 }, completed: [], collectedItemIds: [], exploredLandmarkIds: [] },
-    inventory: { counts: { 'ancient-coin': 4 } },
+    inventory: { counts: { 'mysterious-crystal': 1 } },
     collections: { collectedItemIds: ['forest-collectible-2'] }, discoveries: { note: true },
     world: { player: { x: 3, z: 2, rotationY: 0.75 } }, hasSeenTutorial: true, completion: { marker: 'preserve-me' },
   };
   const f = await createFixture({ save: makeSave({ forest }) });
   try {
     assert.equal(f.runtime.questManager.getSnapshot().find(({ id }) => id === 'forest-explorer').progress, 2);
-    assert.equal(f.runtime.inventoryManager.getCount('ancient-coin'), 4);
+    assert.equal(f.runtime.inventoryManager.getCount('forest-ancient-seed'), 1);
     assert.equal(f.runtime.interactionManager.items.find(({ id }) => id === 'forest-collectible-2').collected, true);
     assert.deepEqual(f.runtime.player.object3D.position.toArray().filter((_v, i) => i !== 1), [3, 2]);
     assert.equal(f.runtime.player.object3D.rotation.y, 0.75);
@@ -199,8 +216,9 @@ test('Mystery Island quest progress is not loaded into Forest QuestManager', () 
 
 test('saving updates only Forest progress and preserves Mystery Island, other themes, character, and legacy data', () => withBrowser(async () => {
   const mystery = islandBucket();
+  mystery.inventory = { counts: { 'ancient-coin': 2, 'mysterious-crystal': 1 } };
   mystery.quests = { progress: { 'crystal-explorer': 2 }, completed: [] };
-  const ocean = { ...createThemeProgress(THEME_STATUSES.IN_PROGRESS), quests: { progress: { 'ocean-task': 1 } } };
+  const ocean = { ...createThemeProgress(THEME_STATUSES.IN_PROGRESS), inventory: { counts: { 'ocean-deep-pearl': 3 } }, quests: { progress: { 'ocean-task': 1 } } };
   const f = await createFixture({ save: makeSave({ mystery, ocean }) });
   try {
     f.runtime.interactionManager.collectItem(f.runtime.interactionManager.items[0]);
@@ -210,6 +228,14 @@ test('saving updates only Forest progress and preserves Mystery Island, other th
     assert.deepEqual(saved.themeProgress[THEME_IDS.OCEAN], ocean);
     assert.equal(saved.themeProgress[THEME_IDS.FOREST].status, THEME_STATUSES.IN_PROGRESS);
     assert.ok(saved.themeProgress[THEME_IDS.FOREST].quests.progress['forest-collector'] > 0);
+    assert.equal(saved.themeProgress[THEME_IDS.FOREST].inventory.counts['forest-magic-mushroom'], 1);
+    assert.deepEqual(saved.themeProgress[THEME_IDS.FOREST].inventory.counts, {
+      'forest-magic-mushroom': 1,
+      'forest-ancient-seed': 0,
+      'forest-butterfly-specimen': 0,
+      'forest-forest-feather': 0,
+      'forest-fairy-leaf': 0,
+    });
     assert.equal(saved.characterId, 'girl-explorer');
     assert.deepEqual(saved.legacyData, { retained: true });
     assert.equal(f.returned, 1);
