@@ -10,6 +10,7 @@ import { ADVENTURE_THEMES, createThemeProgress, THEME_IDS, THEME_STATUSES } from
 import { AdventureThemeCompletionManager } from '../../adventure/AdventureThemeCompletionManager.js';
 import { BadgeManager } from '../../badges/BadgeManager.js';
 import { PanelCoordinator } from '../../ui/PanelCoordinator.js';
+import { selectQuestTarget } from '../../quests/QuestTargetSelector.js';
 import { ISLAND_WALKABLE_RADIUS, PLAYER_COLLISION_RADIUS } from '../../config/gameConfig.js';
 import { createMagicCastleScene } from './createMagicCastleScene.js';
 import { createMagicCastleLandmarks } from './createMagicCastleLandmarks.js';
@@ -88,11 +89,15 @@ export class MagicCastleRuntime {
     interactionManagerFactory = createDefaultInteractionManager,
     questUIFactory,
     inventoryUIFactory,
+    directionIndicatorFactory = async (options) => {
+      const { ItemDirectionIndicator } = await import('../../items/ItemDirectionIndicator.js');
+      return new ItemDirectionIndicator(options);
+    },
     questCompletionUIFactory = createDefaultQuestCompletionUI,
     playerModelLoader = loadPlayerModel,
     clockFactory = () => new THREE.Clock(),
   } = {}) {
-    Object.assign(this, { sceneFactory, rendererFactory, playerFactory, cameraControllerFactory, mobileControlsFactory, interactionManagerFactory, questUIFactory, inventoryUIFactory, questCompletionUIFactory, playerModelLoader, clockFactory });
+    Object.assign(this, { sceneFactory, rendererFactory, playerFactory, cameraControllerFactory, mobileControlsFactory, interactionManagerFactory, questUIFactory, inventoryUIFactory, directionIndicatorFactory, questCompletionUIFactory, playerModelLoader, clockFactory });
     this.isActive = false;
     this.isDisposed = true;
   }
@@ -212,6 +217,7 @@ export class MagicCastleRuntime {
           app: this.app, inventory: this.inventoryManager, panelCoordinator: this.panelCoordinator,
         });
       }
+    this.directionIndicator = await this.directionIndicatorFactory({ app: this.app, player: this.player, getTarget: () => this.getDirectionTarget(), getCameraForward: () => this.cameraController.getForwardDirection() });
       this.completionEventSource = new CompletionEventSource();
       this.emptyNatureCompletionSource = new CompletionEventSource();
       this.badgeManager = new BadgeManager({ questManager: this.completionEventSource, badges: [MAGIC_CASTLE_BADGE] });
@@ -286,11 +292,38 @@ export class MagicCastleRuntime {
     this.cameraController?.update(delta);
     this.interactionManager?.update();
     this.questCompletionUI?.update();
+    this.directionIndicator?.update();
     this.updatePositionAutosave(delta);
     this.renderer?.render(this.scene, this.camera);
   };
 
   getQuestSnapshot() { return this.questManager?.getSnapshot() ?? []; }
+
+  getDirectionTarget() {
+    const taskStates = this.questManager?.getSnapshot() ?? [];
+    const landmarks = this.landmarks ?? [];
+    const items = this.items ?? [];
+    const targetsByTask = {};
+    for (const task of taskStates) {
+      const objective = task.objective ?? {};
+      const landmarkIds = objective.landmarkIds ?? (objective.type === 'explore_landmark' || task.type === 'explore_landmark' ? landmarks.map(({ id }) => id) : []);
+      const collectibleIds = objective.collectibleIds ?? (objective.type === 'collect_any' || task.type === 'collect_any' ? items.map(({ id }) => id) : []);
+      const landmarkIdSet = new Set(landmarkIds);
+      const collectibleIdSet = new Set(collectibleIds);
+      targetsByTask[task.id] = [
+        ...landmarks.filter((landmark) => landmarkIdSet.has(landmark.id) && !this.questManager.hasExploredLandmark(landmark.id))
+          .map((landmark) => ({ id: landmark.id, kind: 'landmark', icon: landmark.icon ?? task.icon, name: landmark.title ?? landmark.name ?? landmark.id, position: landmark.position, interactionDistance: landmark.interactionDistance ?? 1 })),
+        ...items.filter((item) => collectibleIdSet.has(item.id) && !item.collected && !this.questManager.hasCollectedItem(item.id))
+          .map((item) => ({ id: item.id, kind: 'item', icon: item.icon ?? task.icon, name: item.name ?? item.id, position: item.position, interactionDistance: item.interactionDistance ?? 1 })),
+      ];
+    }
+    const currentLockedTarget = this.lockedDirectionTarget ?? null;
+    const currentLockedTargetValid = Boolean(currentLockedTarget
+      && !taskStates.find(({ id }) => id === currentLockedTarget.taskId)?.completed
+      && targetsByTask[currentLockedTarget.taskId]?.some(({ id }) => id === currentLockedTarget.id));
+    this.lockedDirectionTarget = selectQuestTarget({ taskStates, taskPriority: taskStates.map(({ id }) => id), preferProgress: false, targetsByTask, playerPosition: this.player?.object3D?.position ?? { x: 0, z: 0 }, currentLockedTarget, currentLockedTargetValid });
+    return this.lockedDirectionTarget;
+  }
 
   getRestoreMagicCastleProgress() {
     return this.initialRestoreData?.themeProgress?.[THEME_IDS.MAGIC_CASTLE] ?? null;
@@ -431,6 +464,9 @@ export class MagicCastleRuntime {
     this.unsubscribeQuestCompletion = null;
     this.questCompletionUI?.dispose();
     this.questCompletionUI = null;
+    this.directionIndicator?.dispose();
+    this.directionIndicator = null;
+    this.lockedDirectionTarget = null;
     this.questUI?.dispose();
     this.questUI = null;
     this.inventoryUI?.dispose();

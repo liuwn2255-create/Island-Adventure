@@ -126,7 +126,13 @@ test('SpaceRuntime creates its scene, player, camera, landmarks, collectibles, a
   assert.equal(f.runtime.renderer.loop instanceof Function, true);
   assert.equal(f.runtime.saveManager, f.saveManager);
   assert.equal(f.runtime.audioManager, undefined);
+  const indicator = f.runtime.directionIndicator;
+  assert.ok(indicator);
+  f.runtime.frame();
+  assert.equal(indicator.element.hidden, false);
+  assert.ok(SPACE_LANDMARKS.some(({ name }) => name === indicator.name.textContent));
   f.cleanup();
+  assert.equal(indicator.element.parentNode, null);
 }));
 
 test('SpaceRuntime supports WASD movement, camera follow, and resize', async () => withBrowser(async ({ window, document }) => {

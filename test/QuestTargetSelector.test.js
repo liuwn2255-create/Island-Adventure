@@ -131,3 +131,36 @@ test('14. no valid targets returns null', () => {
   });
   assert.equal(result, null);
 });
+
+test('15. caller-provided quest order selects targets without Island quest IDs', () => {
+  const tasks = [
+    { id: 'castle-explorer', progress: 0, completed: false },
+    { id: 'castle-collector', progress: 0, completed: false },
+  ];
+  const result = selectQuestTarget({
+    taskStates: tasks,
+    taskPriority: ['castle-explorer', 'castle-collector'],
+    targetsByTask: {
+      'castle-explorer': [target('tower', 'landmark', 4, 0)],
+      'castle-collector': [target('gem', 'item', 1, 0)],
+    },
+  });
+  assert.equal(result?.taskId, 'castle-explorer');
+  assert.equal(result?.id, 'tower');
+});
+
+test('16. caller can preserve configured quest order instead of prioritizing progressed tasks', () => {
+  const tasks = makeTasks({
+    'crystal-explorer': { progress: 1 },
+    collector: { progress: 2 },
+  });
+  const result = selectQuestTarget({
+    taskStates: tasks,
+    targetsByTask: {
+      'crystal-explorer': [target('crystal-a', 'item', 8, 0)],
+      collector: [target('shell-a', 'item', 1, 0)],
+    },
+    preferProgress: false,
+  });
+  assert.equal(result?.taskId, 'crystal-explorer');
+});

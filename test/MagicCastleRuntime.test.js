@@ -143,7 +143,13 @@ test('MagicCastleRuntime builds the standalone scene, player, three landmarks, f
   assert.equal(runtime.audioManager, undefined);
   assert.ok(runtime.badgeManager);
   assert.equal(runtime.questCompletionUI, fixture.completionUI);
+  const indicator = runtime.directionIndicator;
+  assert.ok(indicator);
+  runtime.frame();
+  assert.equal(indicator.element.hidden, false);
+  assert.ok(MAGIC_CASTLE_LANDMARKS.some(({ name }) => name === indicator.name.textContent));
   fixture.runtime.exit();
+  assert.equal(indicator.element.parentNode, null);
   fixture.saveManager.clearSave();
 }));
 

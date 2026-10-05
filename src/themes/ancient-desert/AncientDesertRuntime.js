@@ -12,6 +12,7 @@ import { ADVENTURE_THEMES, createThemeProgress, THEME_IDS, THEME_STATUSES } from
 import { AdventureThemeCompletionManager } from '../../adventure/AdventureThemeCompletionManager.js';
 import { BadgeManager } from '../../badges/BadgeManager.js';
 import { PanelCoordinator } from '../../ui/PanelCoordinator.js';
+import { selectQuestTarget } from '../../quests/QuestTargetSelector.js';
 import { createAncientDesertScene } from './createAncientDesertScene.js';
 import { createAncientDesertLandmarks } from './createAncientDesertLandmarks.js';
 import { createAncientDesertCollectibles } from './createAncientDesertCollectibles.js';
@@ -94,6 +95,10 @@ export class AncientDesertRuntime {
     interactionManagerFactory = createDefaultInteractionManager,
     questUIFactory,
     inventoryUIFactory,
+    directionIndicatorFactory = async (options) => {
+      const { ItemDirectionIndicator } = await import('../../items/ItemDirectionIndicator.js');
+      return new ItemDirectionIndicator(options);
+    },
     questCompletionUIFactory = createDefaultQuestCompletionUI,
     playerModelLoader = loadPlayerModel,
     clockFactory = () => new THREE.Clock(),
@@ -106,6 +111,7 @@ export class AncientDesertRuntime {
     this.interactionManagerFactory = interactionManagerFactory;
     this.questUIFactory = questUIFactory;
     this.inventoryUIFactory = inventoryUIFactory;
+    this.directionIndicatorFactory = directionIndicatorFactory;
     this.questCompletionUIFactory = questCompletionUIFactory;
     this.playerModelLoader = playerModelLoader;
     this.clockFactory = clockFactory;
@@ -243,6 +249,7 @@ export class AncientDesertRuntime {
           app: this.app, inventory: this.inventoryManager, panelCoordinator: this.panelCoordinator,
         });
       }
+      this.directionIndicator = await this.directionIndicatorFactory({ app: this.app, player: this.player, getTarget: () => this.getDirectionTarget(), getCameraForward: () => this.cameraController.getForwardDirection() });
       this.completionEventSource = new CompletionEventSource();
       this.emptyNatureCompletionSource = new CompletionEventSource();
       this.badgeManager = new BadgeManager({
@@ -320,6 +327,7 @@ export class AncientDesertRuntime {
     this.cameraController?.update(delta);
     this.interactionManager?.update();
     this.questCompletionUI?.update();
+    this.directionIndicator?.update();
     this.updatePositionAutosave(delta);
     this.renderer?.render(this.scene, this.camera);
   };
@@ -429,6 +437,32 @@ export class AncientDesertRuntime {
     return this.questManager?.getSnapshot() ?? [];
   }
 
+  getDirectionTarget() {
+    const taskStates = this.questManager?.getSnapshot() ?? [];
+    const landmarks = this.landmarks ?? [];
+    const items = this.items ?? [];
+    const targetsByTask = {};
+    for (const task of taskStates) {
+      const objective = task.objective ?? {};
+      const landmarkIds = objective.landmarkIds ?? (objective.type === 'explore_landmark' || task.type === 'explore_landmark' ? landmarks.map(({ id }) => id) : []);
+      const collectibleIds = objective.collectibleIds ?? (objective.type === 'collect_any' || task.type === 'collect_any' ? items.map(({ id }) => id) : []);
+      const landmarkIdSet = new Set(landmarkIds);
+      const collectibleIdSet = new Set(collectibleIds);
+      targetsByTask[task.id] = [
+        ...landmarks.filter((landmark) => landmarkIdSet.has(landmark.id) && !this.questManager.hasExploredLandmark(landmark.id))
+          .map((landmark) => ({ id: landmark.id, kind: 'landmark', icon: landmark.icon ?? task.icon, name: landmark.title ?? landmark.name ?? landmark.id, position: landmark.position, interactionDistance: landmark.interactionDistance ?? 1 })),
+        ...items.filter((item) => collectibleIdSet.has(item.id) && !item.collected && !this.questManager.hasCollectedItem(item.id))
+          .map((item) => ({ id: item.id, kind: 'item', icon: item.icon ?? task.icon, name: item.name ?? item.id, position: item.position, interactionDistance: item.interactionDistance ?? 1 })),
+      ];
+    }
+    const currentLockedTarget = this.lockedDirectionTarget ?? null;
+    const currentLockedTargetValid = Boolean(currentLockedTarget
+      && !taskStates.find(({ id }) => id === currentLockedTarget.taskId)?.completed
+      && targetsByTask[currentLockedTarget.taskId]?.some(({ id }) => id === currentLockedTarget.id));
+    this.lockedDirectionTarget = selectQuestTarget({ taskStates, taskPriority: taskStates.map(({ id }) => id), preferProgress: false, targetsByTask, playerPosition: this.player?.object3D?.position ?? { x: 0, z: 0 }, currentLockedTarget, currentLockedTargetValid });
+    return this.lockedDirectionTarget;
+  }
+
   returnToAdventureWorld() {
     if (!this.isActive || this.isLeaving) return false;
     this.isLeaving = true;
@@ -469,6 +503,9 @@ export class AncientDesertRuntime {
     this.unsubscribeQuestCompletion = null;
     this.questCompletionUI?.dispose();
     this.questCompletionUI = null;
+    this.directionIndicator?.dispose();
+    this.directionIndicator = null;
+    this.lockedDirectionTarget = null;
     this.questUI?.dispose();
     this.questUI = null;
     this.inventoryUI?.dispose();

@@ -157,7 +157,13 @@ test('AncientDesertRuntime creates the desert scene, player, camera, mobile cont
   assert.equal(testFixture.runtime.renderer.loop instanceof Function, true);
   assert.equal(testFixture.runtime.audioManager, undefined);
   assert.equal(testFixture.runtime.saveManager, testFixture.saveManager);
+  const indicator = testFixture.runtime.directionIndicator;
+  assert.ok(indicator);
+  testFixture.runtime.frame();
+  assert.equal(indicator.element.hidden, false);
+  assert.equal(indicator.name.textContent, testFixture.runtime.landmarks.find(({ id }) => id === indicator.getTarget().id).title);
   testFixture.cleanup();
+  assert.equal(indicator.element.parentNode, null);
 }));
 
 test('WASD moves the player on stable desert ground and camera follows', async () => withBrowser(async ({ window, document }) => {

@@ -12,6 +12,8 @@ export const DIRECTION_TASK_PRIORITY = Object.freeze([
 export function selectQuestTarget({
   taskStates = [],
   targetsByTask = {},
+  taskPriority = DIRECTION_TASK_PRIORITY,
+  preferProgress = true,
   playerPosition = { x: 0, z: 0 },
   currentLockedTarget = null,
   currentLockedTargetValid = false,
@@ -19,11 +21,11 @@ export function selectQuestTarget({
   if (currentLockedTarget && currentLockedTargetValid) return currentLockedTarget;
 
   const taskById = new Map(taskStates.map((task) => [task.id, task]));
-  const incompleteTasks = DIRECTION_TASK_PRIORITY
+  const incompleteTasks = taskPriority
     .map((id) => taskById.get(id))
     .filter((task) => task && !task.completed);
   const progressedTasks = incompleteTasks.filter((task) => task.progress > 0);
-  const candidates = progressedTasks.length > 0 ? progressedTasks : incompleteTasks;
+  const candidates = preferProgress && progressedTasks.length > 0 ? progressedTasks : incompleteTasks;
 
   for (const task of candidates) {
     const targets = (targetsByTask[task.id] ?? []).filter((target) => target.isValid !== false);

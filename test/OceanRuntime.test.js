@@ -359,8 +359,14 @@ test('enter creates the Ocean scene, renderer, camera, and enabled player; exit 
   assert.ok(fixture.runtime.camera instanceof THREE.PerspectiveCamera);
   assert.equal(fixture.runtime.player.enabled, true);
   assert.equal(typeof fixture.renderer.loop, 'function');
+  const indicator = fixture.runtime.directionIndicator;
+  assert.ok(indicator);
+  fixture.runtime.frame();
+  assert.equal(indicator.element.hidden, false);
+  assert.ok(OCEAN_LANDMARKS.some(({ name }) => name === indicator.name.textContent));
   const interactionManager = fixture.runtime.interactionManager;
   fixture.cleanup();
+  assert.equal(indicator.element.parentNode, null);
   fixture.runtime.exit();
   assert.equal(fixture.runtime.isDisposed, true);
   assert.equal(fixture.renderer.loop, null);

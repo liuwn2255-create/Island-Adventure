@@ -222,7 +222,13 @@ test('DinosaurRuntime creates Dinosaur scene, renderer, player, camera, and mobi
   assert.equal(fixture.runtime.audioManager, undefined);
   assert.equal(SAVE_VERSION, 2);
   assert.ok(fixture.renderer.loop);
+  const indicator = fixture.runtime.directionIndicator;
+  assert.ok(indicator);
+  fixture.runtime.frame();
+  assert.equal(indicator.element.hidden, false);
+  assert.ok(DINOSAUR_LANDMARKS.some(({ name }) => name === indicator.name.textContent));
   fixture.cleanup();
+  assert.equal(indicator.element.parentNode, null);
 }));
 
 test('DinosaurRuntime creates all configured landmarks, collectibles, and quests', async () => withBrowser(async ({ window, document }) => {
