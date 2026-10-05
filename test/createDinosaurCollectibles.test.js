@@ -70,7 +70,9 @@ test('five Dinosaur collectible visuals have distinct identifying model structur
       item.object3D.traverse((object) => { if (object.isMesh) names.push(object.name); });
       return names;
     });
-    assert.ok(namesByItem[0].some((name) => name === 'DinosaurFossilBone'));
+    assert.ok(namesByItem[0].some((name) => name === 'DinosaurFossilBackbone'));
+    assert.ok(namesByItem[0].some((name) => name === 'DinosaurFossilSkull'));
+    assert.ok(namesByItem[0].some((name) => name.startsWith('DinosaurFossilRib-')));
     assert.ok(namesByItem[1].some((name) => name === 'DinosaurEggOval'));
     assert.ok(namesByItem[2].some((name) => name === 'DinosaurFeatherShaft'));
     assert.ok(namesByItem[3].some((name) => name === 'DinosaurToothPoint'));

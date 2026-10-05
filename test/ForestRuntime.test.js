@@ -1,11 +1,19 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import { registerHooks } from 'node:module';
 import test from 'node:test';
 import { SaveManager } from '../src/save/SaveManager.js';
 import { SAVE_VERSION } from '../src/save/saveConfig.js';
 import { createThemeProgress, THEME_IDS, THEME_STATUSES } from '../src/adventure/adventureConfig.js';
 import { FOREST_COLLECTIBLE_TYPES, FOREST_COLLECTIBLES, FOREST_QUESTS } from '../src/themes/forest/forestConfig.js';
 import { ForestRuntime } from '../src/themes/forest/ForestRuntime.js';
+
+registerHooks({
+  load(url, context, nextLoad) {
+    if (url.endsWith('.css')) return { format: 'module', source: '', shortCircuit: true };
+    return nextLoad(url, context);
+  },
+});
 
 class FakeElement {
   constructor(tagName) {
@@ -115,7 +123,7 @@ async function withBrowser(run, { touch = false } = {}) {
   }
 }
 
-async function createFixture({ save = null, failWrites = false } = {}) {
+async function createFixture({ save = null, failWrites = false, directionIndicatorFactory } = {}) {
   const storage = new MemoryStorage(save ? JSON.stringify(save) : null, { failWrites });
   const saveManager = new SaveManager({ storage, debounceMs: 60000 });
   const app = new FakeElement('main');
@@ -128,6 +136,7 @@ async function createFixture({ save = null, failWrites = false } = {}) {
     mobileControlsFactory: async (options) => fakeMobileControlsFactory({ ...options, window }),
     questUIFactory: async () => fakeUIFactory(),
     inventoryUIFactory: async () => fakeUIFactory(),
+    directionIndicatorFactory,
   });
   await runtime.enter({
     app, character: { id: 'girl-explorer', modelPath: '/player.glb' }, restoreData: save, saveManager,
@@ -182,6 +191,70 @@ test('enter builds all configured Forest landmarks', () => withBrowser(async () 
   const f = await createFixture();
   try { assert.deepEqual(f.runtime.landmarks.map(({ id }) => id), ['forest-entrance', 'forest-stream', 'forest-mysterious-rock']); }
   finally { cleanup(f); }
+}));
+
+test('Forest navigation selects valid Forest targets, updates each frame, hides without targets, and disposes on exit', () => withBrowser(async () => {
+  let indicatorOptions;
+  const f = await createFixture({
+    directionIndicatorFactory: async (options) => {
+      indicatorOptions = options;
+      const element = new FakeElement('section');
+      element.className = 'item-direction-indicator';
+      element.hidden = true;
+      options.app.appendChild(element);
+      return {
+        element,
+        updateCount: 0,
+        disposeCount: 0,
+        update() {
+          this.updateCount += 1;
+          this.target = options.getTarget();
+          this.element.hidden = !this.target;
+        },
+        dispose() { this.disposeCount += 1; this.element.remove(); },
+      };
+    },
+  });
+  try {
+    const indicator = f.runtime.directionIndicator;
+    assert.ok(indicator);
+    assert.equal(indicator.element.parentNode, f.app);
+    assert.equal(indicatorOptions.player, f.runtime.player);
+    assert.equal(typeof indicatorOptions.getCameraForward, 'function');
+
+    const first = f.runtime.getDirectionTarget();
+    assert.equal(first.taskId, 'forest-explorer');
+    assert.equal(first.kind, 'landmark');
+    assert.ok(['forest-entrance', 'forest-stream', 'forest-mysterious-rock'].includes(first.id));
+    assert.ok(Number.isFinite(first.position.x) && Number.isFinite(first.position.z));
+
+    f.runtime.renderer.loop();
+    assert.equal(indicator.updateCount, 1);
+    assert.equal(indicator.element.hidden, false);
+    assert.equal(indicator.target.id, first.id);
+
+    f.runtime.questManager.recordLandmarkExplored(first.id);
+    const nextLandmark = f.runtime.getDirectionTarget();
+    assert.equal(nextLandmark.taskId, 'forest-explorer');
+    assert.notEqual(nextLandmark.id, first.id);
+
+    for (const landmark of f.runtime.landmarks) f.runtime.questManager.recordLandmarkExplored(landmark.id);
+    const firstCollectible = f.runtime.getDirectionTarget();
+    assert.equal(firstCollectible.taskId, 'forest-collector');
+    assert.equal(firstCollectible.kind, 'item');
+    assert.ok(FOREST_COLLECTIBLES.some(({ id }) => id === firstCollectible.id));
+
+    for (const item of f.runtime.items) f.runtime.questManager.recordCollection(item.id, item.type);
+    assert.equal(f.runtime.getDirectionTarget(), null);
+    f.runtime.renderer.loop();
+    assert.equal(indicator.element.hidden, true);
+    assert.equal(indicator.updateCount, 2);
+
+    f.runtime.exit();
+    assert.equal(indicator.disposeCount, 1);
+    assert.equal(indicator.element.parentNode, null);
+    assert.equal(f.runtime.directionIndicator, null);
+  } finally { cleanup(f); }
 }));
 
 test('Forest restore restores quests, inventory, collections, world, and completion fields', () => withBrowser(async () => {

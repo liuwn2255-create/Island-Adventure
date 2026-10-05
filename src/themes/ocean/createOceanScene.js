@@ -69,7 +69,9 @@ function addBackdrop(scene) {
   const wallMaterial = new THREE.MeshStandardMaterial({ color: '#17364c', roughness: 1, flatShading: true });
   for (let index = 0; index < 22; index += 1) {
     const angle = (index / 22) * Math.PI * 2;
-    const radius = 11.4 + (index % 4) * 0.45;
+    // Keep this scenery outside the entire third-person camera orbit. The
+    // previous 11m ring intersected the camera at the edge of the walkable area.
+    const radius = 23.5 + (index % 4) * 0.45;
     const height = 3.6 + (index % 5) * 0.72;
     const rock = new THREE.Mesh(
       index % 3 === 0 ? new THREE.IcosahedronGeometry(1, 1) : new THREE.DodecahedronGeometry(1, 0),

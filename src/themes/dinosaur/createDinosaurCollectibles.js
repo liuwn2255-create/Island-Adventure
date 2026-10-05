@@ -8,26 +8,58 @@ function material(color, options = {}) {
 }
 
 function addFossil(group) {
-  const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.43, 0), material('#80684a'));
-  stone.name = 'DinosaurFossilRock';
-  stone.position.y = 0.28;
-  stone.scale.set(1.2, 0.7, 0.85);
-  stone.castShadow = true;
-  group.add(stone);
+  const sediment = new THREE.Mesh(new THREE.DodecahedronGeometry(0.49, 0), material('#80684a'));
+  sediment.name = 'DinosaurFossilSediment';
+  sediment.position.y = 0.2;
+  sediment.scale.set(1.45, 0.5, 0.95);
+  sediment.castShadow = true;
+  group.add(sediment);
 
-  const bone = material('#ead9b3');
-  const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.07, 0.56, 7), bone);
-  spine.name = 'DinosaurFossilBone';
+  const bone = material('#ead9b3', { roughness: 0.68 });
+  const joint = new THREE.MeshStandardMaterial({ color: '#d6c39d', roughness: 0.76, flatShading: true });
+  const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.065, 0.9, 7), bone);
+  spine.name = 'DinosaurFossilBackbone';
   spine.rotation.z = Math.PI / 2;
-  spine.position.y = 0.45;
+  spine.position.set(0.02, 0.48, 0);
   spine.castShadow = true;
   group.add(spine);
-  for (let side = -1; side <= 1; side += 2) {
-    const rib = new THREE.Mesh(new THREE.SphereGeometry(0.09, 7, 5), bone);
-    rib.name = `DinosaurFossilRib-${side}`;
-    rib.position.set(side * 0.2, 0.48, 0.1);
-    rib.scale.set(0.55, 0.6, 1.5);
+  for (let index = 0; index < 5; index += 1) {
+    const vertebra = new THREE.Mesh(new THREE.SphereGeometry(0.085 - index * 0.004, 7, 5), joint);
+    vertebra.name = `DinosaurFossilVertebra-${index + 1}`;
+    vertebra.position.set(-0.34 + index * 0.17, 0.49, 0);
+    vertebra.scale.set(1, 0.82, 1.08);
+    group.add(vertebra);
+  }
+  for (let index = 0; index < 3; index += 1) {
+    const rib = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.035, 5, 12, Math.PI), bone);
+    rib.name = `DinosaurFossilRib-${index + 1}`;
+    rib.rotation.set(Math.PI / 2, 0, Math.PI);
+    rib.position.set(-0.08 + index * 0.18, 0.49, 0);
+    rib.scale.set(0.78, 1.15, 1);
     group.add(rib);
+  }
+
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.22, 9, 7), bone);
+  skull.name = 'DinosaurFossilSkull';
+  skull.position.set(0.57, 0.53, 0);
+  skull.scale.set(1.18, 0.74, 0.84);
+  skull.castShadow = true;
+  group.add(skull);
+  const snout = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.3, 7), bone);
+  snout.name = 'DinosaurFossilSnout';
+  snout.position.set(0.77, 0.47, 0);
+  snout.rotation.z = -Math.PI / 2;
+  group.add(snout);
+  for (const side of [-1, 1]) {
+    const socket = new THREE.Mesh(new THREE.SphereGeometry(0.065, 7, 5), material('#594b3c'));
+    socket.name = `DinosaurFossilEyeSocket-${side}`;
+    socket.position.set(0.58, 0.58, side * 0.13);
+    group.add(socket);
+    const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.11, 5), joint);
+    tooth.name = `DinosaurFossilTooth-${side}`;
+    tooth.position.set(0.73, 0.35, side * 0.07);
+    tooth.rotation.z = Math.PI;
+    group.add(tooth);
   }
 }
 

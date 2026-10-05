@@ -167,6 +167,50 @@ test('Magic Castle enables WASD movement, follows the player, and updates render
   fixture.saveManager.clearSave();
 }));
 
+test('Magic Castle initial camera, WASD movement, and direction indicator share one forward basis', async () => withBrowser(async ({ window, document }) => {
+  const { getRelativeItemDirection } = await import('../src/items/ItemDirectionIndicator.js');
+  const fixture = createFixture();
+  await fixture.enter(window, document);
+  try {
+    const { runtime } = fixture;
+    const hall = runtime.landmarks[0].object3D.getObjectByName('MagicCastleGreatHall');
+    const hallBounds = new THREE.Box3().setFromObject(hall);
+    assert.equal(hallBounds.containsPoint(runtime.camera.position), false, 'initial camera must not be inside the castle hall wall volume');
+    assert.ok(runtime.camera.position.z > 0, 'fresh player should start on the courtyard side of the castle');
+    const forward = runtime.getRenderedCameraForward().clone();
+    const castleDirection = new THREE.Vector3(0, 0, -8).sub(runtime.camera.position).setY(0).normalize();
+    assert.ok(forward.dot(castleDirection) > 0.95, 'initial view should face the castle from the courtyard');
+
+    // During camera smoothing, use the rendered camera basis rather than the
+    // controller's destination yaw so D and the arrow remain visually aligned.
+    runtime.cameraController.rotateBy(120, 0);
+    runtime.frame();
+    const settledView = runtime.getRenderedCameraForward().clone();
+    const actualView = runtime.camera.getWorldDirection(new THREE.Vector3()).setY(0).normalize();
+    assert.ok(settledView.dot(actualView) > 0.999);
+
+    const indicatorForward = runtime.directionIndicator.getCameraForward();
+    assert.ok(indicatorForward.distanceTo(settledView) < 1e-8, 'navigation arrow uses the rendered camera forward vector');
+    const forwardTarget = runtime.player.object3D.position.clone().addScaledVector(settledView, 10);
+    assert.equal(getRelativeItemDirection(runtime.player.object3D.position, indicatorForward, forwardTarget), '↑');
+
+    const right = new THREE.Vector3().crossVectors(settledView, new THREE.Vector3(0, 1, 0)).normalize();
+    for (const [code, expectedAxis, expectedSign] of [
+      ['KeyW', forward, 1], ['KeyS', forward, -1], ['KeyD', right, 1], ['KeyA', right, -1],
+    ]) {
+      const start = runtime.player.object3D.position.clone();
+      window.dispatch('keydown', { code, preventDefault() {} });
+      runtime.frame();
+      window.dispatch('keyup', { code, preventDefault() {} });
+      const displacement = runtime.player.object3D.position.clone().sub(start);
+      assert.ok(displacement.dot(expectedAxis) * expectedSign > 0, `${code} should move on its expected camera-relative axis`);
+    }
+  } finally {
+    fixture.runtime.exit();
+    fixture.saveManager.clearSave();
+  }
+}));
+
 test('E explores each Magic Castle landmark once and updates the landmark quest progress', async () => withBrowser(async ({ window, document }) => {
   const fixture = createFixture();
   await fixture.enter(window, document);

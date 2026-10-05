@@ -10,6 +10,7 @@ import { PlayerController } from '../../player/PlayerController.js';
 import { ThirdPersonCamera } from '../../camera/ThirdPersonCamera.js';
 import { loadPlayerModel, PLAYER_MODEL_FORWARD_OFFSET } from '../../player/PlayerModel.js';
 import { QuestManager } from '../../quests/QuestManager.js';
+import { selectQuestTarget } from '../../quests/QuestTargetSelector.js';
 import { PanelCoordinator } from '../../ui/PanelCoordinator.js';
 import { SaveManager } from '../../save/SaveManager.js';
 import { SAVE_VERSION } from '../../save/saveConfig.js';
@@ -88,6 +89,10 @@ export class ForestRuntime {
     mobileControlsFactory,
     questUIFactory,
     inventoryUIFactory,
+    directionIndicatorFactory = async (options) => {
+      const { ItemDirectionIndicator } = await import('../../items/ItemDirectionIndicator.js');
+      return new ItemDirectionIndicator(options);
+    },
   } = {}) {
     this.sceneFactory = sceneFactory;
     this.rendererFactory = rendererFactory;
@@ -96,6 +101,7 @@ export class ForestRuntime {
     this.mobileControlsFactory = mobileControlsFactory;
     this.questUIFactory = questUIFactory;
     this.inventoryUIFactory = inventoryUIFactory;
+    this.directionIndicatorFactory = directionIndicatorFactory;
     this.isActive = false;
     this.isDisposed = true;
     this.isLeaving = false;
@@ -198,6 +204,12 @@ export class ForestRuntime {
         inventory: this.inventoryManager,
         panelCoordinator: this.panelCoordinator,
       });
+      this.directionIndicator = await this.directionIndicatorFactory({
+        app: this.app,
+        player: this.player,
+        getTarget: () => this.getDirectionTarget(),
+        getCameraForward: () => this.cameraController.getForwardDirection(),
+      });
       this.createReturnButton();
       this.createMovementHint();
 
@@ -256,6 +268,60 @@ export class ForestRuntime {
       this.movementHintTimer = null;
     }, 1800);
   }
+
+  getDirectionTarget() {
+    const taskStates = this.questManager?.getSnapshot() ?? [];
+    const landmarks = this.landmarks ?? [];
+    const items = this.items ?? [];
+    const hasPosition = (target) => Number.isFinite(target?.position?.x) && Number.isFinite(target?.position?.z);
+    const targetsByTask = {};
+
+    for (const task of taskStates) {
+      const objective = task.objective ?? {};
+      const landmarkIds = objective.landmarkIds
+        ?? (task.type === 'explore_landmark' ? landmarks.map(({ id }) => id) : []);
+      const collectibleIds = objective.collectibleIds
+        ?? (task.type === 'collect_any' ? items.map(({ id }) => id) : []);
+      const landmarkIdSet = new Set(landmarkIds);
+      const collectibleIdSet = new Set(collectibleIds);
+      targetsByTask[task.id] = [
+        ...landmarks
+          .filter((landmark) => landmarkIdSet.has(landmark.id)
+            && hasPosition(landmark)
+            && !this.questManager.hasExploredLandmark(landmark.id))
+          .map((landmark) => ({
+            id: landmark.id,
+            kind: 'landmark',
+            icon: landmark.icon ?? task.icon,
+            name: landmark.title ?? landmark.name ?? landmark.id,
+            position: landmark.position,
+            interactionDistance: landmark.interactionDistance ?? 1,
+          })),
+        ...items
+          .filter((item) => collectibleIdSet.has(item.id)
+            && hasPosition(item)
+            && !item.collected
+            && !this.questManager.hasCollectedItem(item.id))
+          .map((item) => ({
+            id: item.id,
+            kind: 'item',
+            icon: item.icon ?? task.icon,
+            name: item.name ?? item.id,
+            position: item.position,
+            interactionDistance: item.interactionDistance ?? 1,
+          })),
+      ];
+    }
+
+    return selectQuestTarget({
+      taskStates,
+      taskPriority: FOREST_QUESTS.map(({ id }) => id),
+      preferProgress: false,
+      targetsByTask,
+      playerPosition: this.player?.object3D?.position ?? { x: 0, z: 0 },
+    });
+  }
+
   setupAutosave() {
     let previousCounts = this.inventoryManager.getCounts();
     this.unsubscribers.push(this.inventoryManager.subscribe((counts) => {
@@ -329,6 +395,7 @@ export class ForestRuntime {
     this.player?.update(delta);
     this.cameraController?.update(delta);
     this.interactionManager?.update();
+    this.directionIndicator?.update();
     this.renderer?.render(this.scene, this.camera);
   };
 
@@ -370,6 +437,8 @@ export class ForestRuntime {
     this.unsubscribers = [];
     this.questUI?.dispose();
     this.inventoryUI?.dispose();
+    this.directionIndicator?.dispose();
+    this.directionIndicator = null;
     this.panelCoordinator?.dispose();
     this.interactionManager?.dispose();
     this.mobileControls?.dispose();

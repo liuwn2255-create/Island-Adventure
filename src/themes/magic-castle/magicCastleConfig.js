@@ -33,7 +33,7 @@ export const MAGIC_CASTLE_LANDMARKS = Object.freeze([
 export const MAGIC_CASTLE_COLLECTIBLES = Object.freeze([
   Object.freeze({ id: 'magic-collectible-1', type: 'magic-crystal', position: Object.freeze({ x: -9, z: 6 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
   Object.freeze({ id: 'magic-collectible-2', type: 'wizard-scroll', position: Object.freeze({ x: -2, z: 4 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
-  Object.freeze({ id: 'magic-collectible-3', type: 'enchanted-key', position: Object.freeze({ x: 10, z: 6 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
+  Object.freeze({ id: 'magic-collectible-3', type: 'enchanted-key', position: Object.freeze({ x: 7.7, z: 4.8 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
   Object.freeze({ id: 'magic-collectible-4', type: 'fairy-gem', position: Object.freeze({ x: -3, z: -14 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
-  Object.freeze({ id: 'magic-collectible-5', type: 'magic-potion', position: Object.freeze({ x: 4, z: 11 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
+  Object.freeze({ id: 'magic-collectible-5', type: 'magic-potion', position: Object.freeze({ x: 3, z: 8 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
 ]);

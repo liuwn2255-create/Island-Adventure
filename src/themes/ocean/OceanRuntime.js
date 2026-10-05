@@ -12,7 +12,7 @@ import { AdventureThemeCompletionManager } from '../../adventure/AdventureThemeC
 import { PanelCoordinator } from '../../ui/PanelCoordinator.js';
 import { selectQuestTarget } from '../../quests/QuestTargetSelector.js';
 import { createOceanScene } from './createOceanScene.js';
-import { createCollectibleItems } from '../../items/createCollectibleItems.js';
+import { createOceanCollectibles } from './createOceanCollectibles.js';
 import { SaveManager } from '../../save/SaveManager.js';
 import { BadgeManager } from '../../badges/BadgeManager.js';
 import { BADGES } from '../../badges/badgeConfig.js';
@@ -150,7 +150,7 @@ export class OceanRuntime {
         || this.landmarks.some(({ id, object3D }) => !expectedLandmarkIds.has(id) || !object3D)) {
         throw new Error('Ocean scene must provide all configured Ocean landmarks');
       }
-      this.items = createCollectibleItems(
+      this.items = createOceanCollectibles(
         this.scene,
         this.groundHeightAt,
         OCEAN_COLLECTIBLES,

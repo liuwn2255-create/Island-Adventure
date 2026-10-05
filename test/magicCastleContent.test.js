@@ -8,6 +8,7 @@ import { createMagicCastleScene, magicCastleGroundHeightAt } from '../src/themes
 import { MAGIC_CASTLE_COLLECTIBLE_TYPES } from '../src/themes/magic-castle/magicCastleCollectibleConfig.js';
 import { MAGIC_CASTLE_COLLECTIBLES, MAGIC_CASTLE_LANDMARKS, MAGIC_CASTLE_THEME } from '../src/themes/magic-castle/magicCastleConfig.js';
 import { MAGIC_CASTLE_QUESTS } from '../src/themes/magic-castle/magicCastleQuestConfig.js';
+import { ISLAND_WALKABLE_RADIUS, PLAYER_COLLISION_RADIUS } from '../src/config/gameConfig.js';
 
 test('Magic Castle scene builds a night courtyard, road, lights, ground, target, and idempotent dispose', () => {
   const world = createMagicCastleScene();
@@ -64,6 +65,12 @@ test('Magic Castle config provides five unique collectible types and fixed valid
   for (const spawn of MAGIC_CASTLE_COLLECTIBLES) {
     assert.ok(Number.isFinite(spawn.position.x) && Number.isFinite(spawn.position.z));
     for (const landmark of MAGIC_CASTLE_LANDMARKS) assert.ok(Math.hypot(spawn.position.x - landmark.position.x, spawn.position.z - landmark.position.z) > 2.5);
+  }
+  const reachableRadius = ISLAND_WALKABLE_RADIUS - PLAYER_COLLISION_RADIUS;
+  for (const id of ['magic-collectible-3', 'magic-collectible-5']) {
+    const { position } = MAGIC_CASTLE_COLLECTIBLES.find((spawn) => spawn.id === id);
+    assert.ok(Math.hypot(position.x, position.z) < reachableRadius,
+      `${id} must lie inside the shared PlayerController movement boundary`);
   }
 });
 

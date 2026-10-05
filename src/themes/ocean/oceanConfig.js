@@ -49,9 +49,9 @@ export const OCEAN_COLLECTIBLE_TYPES = Object.freeze([
 export const OCEAN_COLLECTIBLES = Object.freeze([
   Object.freeze({ id: 'ocean-collectible-1', type: 'ocean-deep-pearl', position: Object.freeze({ x: -2, z: -1 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
   Object.freeze({ id: 'ocean-collectible-2', type: 'ocean-coral', position: Object.freeze({ x: 2, z: -5 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
-  Object.freeze({ id: 'ocean-collectible-3', type: 'ocean-deep-gem', position: Object.freeze({ x: 6, z: 2 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
+  Object.freeze({ id: 'ocean-collectible-3', type: 'ocean-deep-gem', position: Object.freeze({ x: 8.8, z: 4.3 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
   Object.freeze({ id: 'ocean-collectible-4', type: 'ocean-sunken-treasure', position: Object.freeze({ x: -6, z: 1 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
-  Object.freeze({ id: 'ocean-collectible-5', type: 'ocean-mysterious-scale', position: Object.freeze({ x: 1, z: 7 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
+  Object.freeze({ id: 'ocean-collectible-5', type: 'ocean-mysterious-scale', position: Object.freeze({ x: 3.8, z: 3.8 }), interactionDistance: ITEM_PICKUP_DISTANCE }),
 ]);
 
 export const OCEAN_QUESTS = Object.freeze([

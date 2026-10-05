@@ -25,6 +25,7 @@ const MAGIC_CASTLE_BADGE = Object.freeze({
   description: '完成魔法城堡的三項主要探險任務。',
   icon: '🏰',
 });
+const MAGIC_CASTLE_INITIAL_YAW = 0;
 
 class CompletionEventSource {
   constructor() { this.listeners = new Set(); }
@@ -177,11 +178,20 @@ export class MagicCastleRuntime {
 
       this.player = this.playerFactory(this.scene, {
         groundHeightAt: this.groundHeightAt,
-        getCameraForward: () => this.cameraController.getForwardDirection(),
+        getCameraForward: () => this.getRenderedCameraForward(),
       });
       this.player.enabled = false;
+      // Face the castle from the courtyard entrance; the default shared yaw
+      // puts the follow camera inside the Great Hall's solid wall volume.
+      this.player.object3D.rotation.y = MAGIC_CASTLE_INITIAL_YAW;
       this.restoreWorldPosition();
       this.cameraController = this.cameraControllerFactory({ camera: this.camera, canvas: this.renderer.domElement, player: this.player.object3D });
+      // The provisional camera starts on +Z, while a restored player yaw can
+      // place the controller's follow camera on the opposite side. Snap the
+      // initial view to the same forward vector used by WASD and navigation.
+      this.cameraController.update(0);
+      this.camera.position.copy(this.cameraController.desiredPosition);
+      this.camera.lookAt(this.cameraController.target);
       this.mobileControls = await this.mobileControlsFactory({
         app: this.app,
         canvas: this.renderer.domElement,
@@ -217,7 +227,7 @@ export class MagicCastleRuntime {
           app: this.app, inventory: this.inventoryManager, panelCoordinator: this.panelCoordinator,
         });
       }
-    this.directionIndicator = await this.directionIndicatorFactory({ app: this.app, player: this.player, getTarget: () => this.getDirectionTarget(), getCameraForward: () => this.cameraController.getForwardDirection() });
+    this.directionIndicator = await this.directionIndicatorFactory({ app: this.app, player: this.player, getTarget: () => this.getDirectionTarget(), getCameraForward: () => this.getRenderedCameraForward() });
       this.completionEventSource = new CompletionEventSource();
       this.emptyNatureCompletionSource = new CompletionEventSource();
       this.badgeManager = new BadgeManager({ questManager: this.completionEventSource, badges: [MAGIC_CASTLE_BADGE] });
@@ -288,14 +298,21 @@ export class MagicCastleRuntime {
   frame = () => {
     if (!this.isActive || this.isDisposed) return;
     const delta = Math.min(this.clock?.getDelta?.() ?? 1 / 60, 0.1);
-    this.player?.update(delta);
     this.cameraController?.update(delta);
+    this.player?.update(delta);
     this.interactionManager?.update();
     this.questCompletionUI?.update();
     this.directionIndicator?.update();
     this.updatePositionAutosave(delta);
     this.renderer?.render(this.scene, this.camera);
   };
+
+  getRenderedCameraForward(target = new THREE.Vector3()) {
+    if (!this.camera) return target.set(0, 0, -1);
+    this.camera.getWorldDirection(target);
+    target.y = 0;
+    return target.lengthSq() > 0 ? target.normalize() : target.set(0, 0, -1);
+  }
 
   getQuestSnapshot() { return this.questManager?.getSnapshot() ?? []; }
 
