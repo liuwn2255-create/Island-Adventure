@@ -213,7 +213,7 @@ export class ForestRuntime {
       this.createReturnButton();
       this.createMovementHint();
 
-      const visual = await this.playerModelLoader(this.character.modelPath, { yawOffset: PLAYER_MODEL_FORWARD_OFFSET });
+      const visual = await this.playerModelLoader(this.character.modelPath, { yawOffset: PLAYER_MODEL_FORWARD_OFFSET, fallbackPath: this.character.fallbackModelPath });
       if (this.isDisposed) {
         disposeObjectResources(visual);
         return this;
@@ -389,9 +389,9 @@ export class ForestRuntime {
     return isV2SaveData(data) ? data : null;
   }
 
-  frame = (deltaSeconds) => {
+  frame = () => {
     if (!this.isActive || this.isDisposed) return;
-    const delta = Number.isFinite(deltaSeconds) ? Math.min(deltaSeconds, 0.1) : 1 / 60;
+    const delta = Math.min(this.clock?.getDelta?.() ?? 1 / 60, 0.1);
     this.player?.update(delta);
     this.cameraController?.update(delta);
     this.interactionManager?.update();

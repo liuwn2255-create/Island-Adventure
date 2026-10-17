@@ -99,7 +99,8 @@ test('existing character has required ID, name, model path, and display metadata
   assert.equal(CHARACTERS.length, 1);
   assert.ok(CHARACTERS.every(isCharacterMetadata));
   assert.equal(CHARACTERS[0].id, 'girl-explorer');
-  assert.ok(CHARACTERS[0].modelPath.endsWith('assets/characters/player/player.glb'));
+  assert.ok(CHARACTERS[0].modelPath.endsWith('assets/models/Meshy_AI_Little_Explorer_All_Animations.glb'));
+  assert.ok(CHARACTERS[0].fallbackModelPath.endsWith('assets/characters/player/player.glb'));
   assert.equal(typeof CHARACTERS[0].displayMetadata.description, 'string');
 });
 

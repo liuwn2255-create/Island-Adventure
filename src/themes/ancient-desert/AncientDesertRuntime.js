@@ -221,7 +221,7 @@ export class AncientDesertRuntime {
         onCameraChange: (deltaX, deltaY) => this.cameraController.rotateBy(deltaX, deltaY),
       });
 
-      const visual = await this.playerModelLoader(this.character.modelPath, { yawOffset: PLAYER_MODEL_FORWARD_OFFSET });
+      const visual = await this.playerModelLoader(this.character.modelPath, { yawOffset: PLAYER_MODEL_FORWARD_OFFSET, fallbackPath: this.character.fallbackModelPath });
       if (this.isDisposed) {
         disposeObjectResources(visual);
         return this;

@@ -55,9 +55,12 @@ export function createCharacterPreview(container) {
   return {
     async showCharacter(character) {
       const sequence = ++loadSequence;
-      const visual = await loadPlayerModel(character.modelPath);
+      const visual = await loadPlayerModel(character.modelPath, { fallbackPath: character.fallbackModelPath });
       if (sequence !== loadSequence) return;
-      if (activeVisual) scene.remove(activeVisual);
+      if (activeVisual) {
+        activeVisual.userData.playerAnimationController?.dispose();
+        scene.remove(activeVisual);
+      }
       activeVisual = visual;
       scene.add(activeVisual);
       render();
@@ -65,6 +68,7 @@ export function createCharacterPreview(container) {
     dispose() {
       loadSequence += 1;
       observer.disconnect();
+      activeVisual?.userData.playerAnimationController?.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     },

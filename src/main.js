@@ -491,7 +491,7 @@ async function startAdventure(character, restoreData = null) {
   reconcileMysteryIslandCompletion();
   // Persist the selected character and restored baseline as soon as the world is ready.
   saveManager.save(getSaveData());
-  const visual = await loadPlayerModel(character.modelPath, { yawOffset: PLAYER_MODEL_FORWARD_OFFSET });
+  const visual = await loadPlayerModel(character.modelPath, { yawOffset: PLAYER_MODEL_FORWARD_OFFSET, fallbackPath: character.fallbackModelPath });
   player.object3D.add(visual);
   gameState.set(GAME_STATES.PLAYING);
   player.enabled = true;

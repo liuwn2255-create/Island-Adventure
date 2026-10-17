@@ -35,6 +35,7 @@ export class PlayerController {
 
     this.pressed = new Set();
     this.externalInput = { right: 0, backward: 0 };
+    this.animationController = null;
     this.onKeyDown = (event) => {
       if (!this.enabled || !KEY_TO_AXIS[event.code]) return;
       event.preventDefault();
@@ -62,16 +63,27 @@ export class PlayerController {
   }
 
   update(deltaSeconds) {
+    const animationController = this.animationController
+      ??= this.object3D.children.find((child) => child.userData?.playerAnimationController)?.userData.playerAnimationController
+      ?? null;
     if (!this.enabled) {
       this.pressed.clear();
       this.externalInput.right = 0;
       this.externalInput.backward = 0;
+      animationController?.setMoving(false);
+      animationController?.update(deltaSeconds);
       return;
     }
     const right = THREE.MathUtils.clamp(Number(this.pressed.has('right')) - Number(this.pressed.has('left')) + this.externalInput.right, -1, 1);
     const backward = THREE.MathUtils.clamp(Number(this.pressed.has('backward')) - Number(this.pressed.has('forward')) + this.externalInput.backward, -1, 1);
-    if (right === 0 && backward === 0) return;
+    if (right === 0 && backward === 0) {
+      animationController?.setMoving(false);
+      animationController?.update(deltaSeconds);
+      return;
+    }
 
+    const previousX = this.object3D.position.x;
+    const previousZ = this.object3D.position.z;
     const movement = getCameraRelativeMovement({ right, backward }, this.getCameraForward());
     const moveX = movement.x;
     const moveZ = movement.z;
@@ -87,9 +99,16 @@ export class PlayerController {
     this.object3D.rotation.y = Math.atan2(-moveX, -moveZ);
     // There is no gravity in this phase; keep the model's feet on the grass.
     this.object3D.position.y = this.groundHeightAt(this.object3D.position.x, this.object3D.position.z);
+    const moved = Math.hypot(this.object3D.position.x - previousX, this.object3D.position.z - previousZ) > 1e-5;
+    animationController?.setMoving(moved);
+    animationController?.update(deltaSeconds);
   }
 
   dispose() {
+    const animationController = this.animationController
+      ?? this.object3D.children.find((child) => child.userData?.playerAnimationController)?.userData.playerAnimationController;
+    animationController?.dispose();
+    this.animationController = null;
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('blur', this.onWindowBlur);

@@ -4,7 +4,8 @@ export const CHARACTERS = Object.freeze([
   Object.freeze({
     id: 'girl-explorer',
     name: '女孩探險家',
-    modelPath: ASSET_BASE_URL + 'assets/characters/player/player.glb',
+    modelPath: ASSET_BASE_URL + 'assets/models/Meshy_AI_Little_Explorer_All_Animations.glb',
+    fallbackModelPath: ASSET_BASE_URL + 'assets/characters/player/player.glb',
     description: '勇敢又好奇，準備好探索島嶼的每個角落。',
     displayMetadata: Object.freeze({
       description: '勇敢又好奇，準備好探索島嶼的每個角落。',
